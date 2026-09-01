@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nome dell'app -->
+    <string name="app_name">Ricorda con Voce</string>
+
+    <!-- Chat e Interfaccia -->
+    <string name="welcome_message">Benvenuto in Ricorda con Voce</string>
+    <string name="hint_enter_message">Scrivi un messaggio...</string>
+    <string name="button_send">Invia</string>
+    <string name="button_scan">Scansiona Pillola</string>
+    <string name="button_record_voice">Registra Voce</string>
+
+    <!-- Stati e Feedback -->
+    <string name="error_empty_message">Il messaggio non può essere vuoto</string>
+    <string name="ai_typing">L\'IA sta scrivendo...</string>
+    <string name="voice_reminder_active">Promemoria vocali attivi</string>
+</resources>

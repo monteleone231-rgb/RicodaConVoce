@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@keyframes soundwave {
+  0%, 100% {
+    transform: scaleY(0.2);
+  }
+  50% {
+    transform: scaleY(1.0);
+  }
+}
+
+.animate-soundwave {
+  animation: soundwave 1.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes pulse-btn-blue {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+@keyframes pulse-btn-amber {
+  0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(217, 119, 6, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+}
+@keyframes pulse-btn-purple {
+  0% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(147, 51, 234, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0); }
+}
+@keyframes pulse-btn-emerald {
+  0% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(5, 150, 105, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
+}
+@keyframes pulse-btn-rose {
+  0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(225, 29, 72, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+}
+
+.animate-pulse-blue { animation: pulse-btn-blue 2s infinite; }
+.animate-pulse-amber { animation: pulse-btn-amber 2s infinite; }
+.animate-pulse-purple { animation: pulse-btn-purple 2s infinite; }
+.animate-pulse-emerald { animation: pulse-btn-emerald 2s infinite; }
+.animate-pulse-rose { animation: pulse-btn-rose 2s infinite; }
+
+.animation-delay-75 {
+  animation-delay: 75ms;
+}
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+.animation-delay-225 {
+  animation-delay: 225ms;
+}
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+.animation-delay-375 {
+  animation-delay: 375ms;
+}
+.animation-delay-450 {
+  animation-delay: 450ms;
+}
+.animation-delay-525 {
+  animation-delay: 525ms;
+}
+.animation-delay-600 {
+  animation-delay: 600ms;
+}
+.animation-delay-675 {
+  animation-delay: 675ms;
+}
+.animation-delay-750 {
+  animation-delay: 750ms;
+}
+.animation-delay-825 {
+  animation-delay: 825ms;
+}
+.animation-delay-900 {
+  animation-delay: 900ms;
+}
+
+

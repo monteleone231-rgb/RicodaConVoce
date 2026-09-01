@@ -1,0 +1,54 @@
+# Informativa sulla Privacy (Privacy Policy)
+**Applicazione:** Ricorda con Voce  
+**Nome Pacchetto Android:** `com.ricordaconvove`  
+**Ultimo aggiornamento:** 14 Agosto 2026  
+**Contatto Sviluppatore:** Monteleone231@gmail.com  
+
+---
+
+## 1. Descrizione dell'Applicazione
+**Ricorda con Voce** è un'applicazione di utilità e organizzazione personale progettata per aiutare gli utenti a impostare e gestire promemoria vocali, note e avvisi sonori giornalieri in modo semplice, chiaro ed intuitivo.
+
+---
+
+## 2. Assenza di Dati Sanitari o Sensibili
+L'applicazione **NON** è un dispositivo medico e **NON raccoglie, tratta né conserva dati sanitari, informazioni mediche o categorie particolari di dati personali** (ex art. 9 del Regolamento UE 2016/679 - GDPR). Allarmi e promemoria riguardano unicamente la gestione generica del tempo ed impegni personali dell'utente.
+
+---
+
+## 3. Conservazione Locale dei Dati (On-Device)
+Tutti i dati creati dall'utente — inclusi titoli dei promemoria, orari impostati, note e preferenze dell'applicazione — sono **memorizzati ed elaborati esclusivamente in locale** sul dispositivo dell'utente (`localStorage` / archivio protetto dell'applicazione).
+
+- **Nessun Server Cloud:** Nessun dato viene trasmesso a server esterni o database remoti.
+- **Nessun Account:** L'applicazione non richiede alcuna registrazione, email o creazione di un profilo utente per funzionare.
+
+---
+
+## 4. Permessi del Dispositivo e Finalità
+L'applicazione richiede unicamente i permessi strettamente necessari alle sue funzioni di promemoria e sveglia:
+
+1. **Microfono e Riconoscimento Vocale (`RECORD_AUDIO`)**
+   - Utilizzato solo su richiesta dell'utente per dettare a voce il testo dei promemoria e delle note. L'elaborazione avviene tramite i servizi vocali di sistema del dispositivo.
+2. **Notifiche e Allarmi di Precisione (`POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`)**
+   - Utilizzati per emettere gli avvisi acustici e mostrare le notifiche all'orario esatto stabilito dall'utente.
+3. **Attivazione Schermo (`USE_FULL_SCREEN_INTENT`, `WAKE_LOCK`)**
+   - Consente di visualizzare la schermata dell'allarme a tutto schermo anche quando il dispositivo si trova in stato di stand-by o blocco.
+
+---
+
+## 5. Terze Parti e Pubblicità
+L'applicazione **non contiene codice di tracciamento pubblicitario**, non utilizza SDK di profilazione (come AdMob, Facebook Pixel o Google Analytics) e **non vende né condivide mai alcun dato utente** con soggetti terzi.
+
+---
+
+## 6. Controllo ed Eliminazione dei Dati
+L'utente ha il pieno ed immediato controllo sui propri dati:
+- Può modificare o eliminare qualsiasi promemoria o nota direttamente dall'interfaccia dell'applicazione.
+- La disinstallazione dell'applicazione dal dispositivo o la cancellazione della memoria dell'app dalle impostazioni di Android comporta l'eliminazione immediata e definitiva di tutti i dati salvati.
+
+---
+
+## 7. Contatti del Titolare del Trattamento
+Per qualsiasi domanda o richiesta di informazioni relative alla presente Informativa sulla Privacy, è possibile contattare lo sviluppatore all'indirizzo email:
+
+📧 **Monteleone231@gmail.com**

@@ -1,0 +1,21 @@
+{
+  "name": "Ricorda con Voce",
+  "short_name": "Ricorda con Voce",
+  "description": "Promemoria vocali intelligenti e agenda semplice ad alta accessibilità.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F0F4F8",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "/icon.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

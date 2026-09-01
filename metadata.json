@@ -1,0 +1,11 @@
+{
+  "name": "Ricorda con Voce",
+  "description": "Un'app mobile accessibile ed empatica per gestire promemoria vocali quotidiani e routine con caratteri grandi e comandi vocali.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

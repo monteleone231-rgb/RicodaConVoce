@@ -1,0 +1,22 @@
+Descrizione per il Google Play Store:
+=======================================
+
+Ricorda con Voce – Promemoria Vocale e Agenda Semplice
+
+Ricorda con Voce è l'applicazione semplice, intuitiva e pensata per chi desidera un aiuto vocale per la gestione della giornata e dei promemoria quotidiani. Ideale per anziani, famiglie e chiunque cerchi un'agenda ad alta accessibilità con notifiche sonore e sintesi vocale.
+
+Caratteristiche principali:
+- 🔊 Promemoria Vocali Intelligenti: ti avvisa a voce e ti ricorda appuntamenti, impegni e routine quotidiane senza dover leggere testi piccoli.
+- 📅 Organizzatore Giornaliero: imposta orari, ripetizioni e messaggi vocali personalizzati.
+- 🗺️ Mappa e Punti di Interesse: individua rapidamente luoghi utili nelle vicinanze.
+- 📞 Chiamata Rapida: un pulsante dedicato per chiamare subito un familiare o un contatto preferito.
+- 🌙 Interfaccia Accessibile: colori ad alto contrasto, caratteri grandi, pulsanti ben visibili e massima facilità d'uso.
+- 🔒 Rispetto della Privacy: funziona completamente in locale sul tuo telefono, senza bisogno di account o connessioni esterne.
+
+---
+
+Categoria consigliata su Play Console: PRODUTTIVITÀ (oppure STRUMENTI)
+Tag consigliati: Promemoria, Agenda, Assistente Vocale, Accessibilità
+
+Privacy Policy:
+L'applicazione opera esclusivamente in locale sulla memoria del dispositivo. Non raccoglie, traccia o condivide dati personali con server esterni.

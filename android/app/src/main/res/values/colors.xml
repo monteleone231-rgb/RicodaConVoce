@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colori Primari (Blu Moderno, coerente con il tema Web esistente) -->
+    <color name="colorPrimary">#2563EB</color>
+    <color name="colorPrimaryVariant">#1E3A8A</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+
+    <!-- Colori di Sfondo e Superficie -->
+    <color name="colorBackground">#F8FAFC</color>
+    <color name="colorSurface">#FFFFFF</color>
+    
+    <!-- Colori specifici per le bolle della Chat -->
+    <color name="chat_bubble_user">#2563EB</color>
+    <color name="chat_bubble_ai">#E2E8F0</color>
+    <color name="chat_text_user">#FFFFFF</color>
+    <color name="chat_text_ai">#1E293B</color>
+
+    <!-- Colori di Testo Standard -->
+    <color name="textColorPrimary">#0F172A</color>
+    <color name="textColorSecondary">#64748B</color>
+
+    <!-- Colori di Stato/Allerta -->
+    <color name="colorError">#EF4444</color>
+    <color name="colorSuccess">#10B981</color>
+</resources>
