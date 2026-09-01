@@ -153,10 +153,10 @@ export const THEME_MAP = {
 export default function App() {
   // 1. Core Onboarding state
   const [onboarded, setOnboarded] = useState<boolean>(() => {
-    return localStorage.getItem('medivoce_onboarded') === 'true';
+    return localStorage.getItem('ricordaconvoce_onboarded') === 'true';
   });
   const [lang, setLang] = useState<LanguageCode>(() => {
-    return (localStorage.getItem('medivoce_lang') as LanguageCode) || 'it';
+    return (localStorage.getItem('ricordaconvoce_lang') as LanguageCode) || 'it';
   });
 
   const t = TRANSLATIONS[lang];
@@ -223,7 +223,7 @@ export default function App() {
       }
     ];
 
-    const saved = localStorage.getItem('medivoce_meds');
+    const saved = localStorage.getItem('ricordaconvoce_meds');
     if (saved) {
       try {
         const parsed: Medication[] = JSON.parse(saved);
@@ -232,7 +232,7 @@ export default function App() {
           /Cardioaspirina|Aspirin|Sciroppo|Bronchenolo|Insulina|Tachipirina/i.test(m.name)
         );
         if (hasOldMedicines) {
-          localStorage.setItem('medivoce_meds', JSON.stringify(defaultMeds));
+          localStorage.setItem('ricordaconvoce_meds', JSON.stringify(defaultMeds));
           return defaultMeds;
         }
         return parsed;
@@ -272,13 +272,13 @@ export default function App() {
       }
     ];
 
-    const saved = localStorage.getItem('medivoce_notes');
+    const saved = localStorage.getItem('ricordaconvoce_notes');
     if (saved) {
       try {
         const parsed: DoctorNote[] = JSON.parse(saved);
         const hasOldMedicalNotes = parsed.some(n => /affanno|sciroppo|pressione|fitta/i.test(n.text));
         if (hasOldMedicalNotes) {
-          localStorage.setItem('medivoce_notes', JSON.stringify(defaultNotes));
+          localStorage.setItem('ricordaconvoce_notes', JSON.stringify(defaultNotes));
           return defaultNotes;
         }
         return parsed;
@@ -296,7 +296,7 @@ export default function App() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   
   // Emergency Phone state
-  const [emergencyPhone, setEmergencyPhone] = useState<string>(localStorage.getItem('medivoce_emergency_number') || '');
+  const [emergencyPhone, setEmergencyPhone] = useState<string>(localStorage.getItem('ricordaconvoce_emergency_number') || '');
 
   // Form State for Adding/Editing
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -326,16 +326,16 @@ export default function App() {
 
   // Settings State variables
   const [speechSpeed, setSpeechSpeed] = useState<number>(() => {
-    const saved = localStorage.getItem('medivoce_speech_speed');
+    const saved = localStorage.getItem('ricordaconvoce_speech_speed');
     return saved ? parseFloat(saved) : 0.75;
   });
   const [speechTone, setSpeechTone] = useState<'empathetic' | 'firm'>(() => {
-    return (localStorage.getItem('medivoce_speech_tone') as 'empathetic' | 'firm') || 'empathetic';
+    return (localStorage.getItem('ricordaconvoce_speech_tone') as 'empathetic' | 'firm') || 'empathetic';
   });
   const [mobileSoundLevel, setMobileSoundLevel] = useState<'none' | 'beep' | 'continuous'>('continuous');
 
   const [vibrationEnabled, setVibrationEnabled] = useState<boolean>(() => {
-    return localStorage.getItem('medivoce_vibration') !== 'false'; // true by default
+    return localStorage.getItem('ricordaconvoce_vibration') !== 'false'; // true by default
   });
 
   const lastCheckedMinuteRef = useRef<string>('');
@@ -353,26 +353,26 @@ export default function App() {
   };
 
   const [voiceAnnounceEnabled, setVoiceAnnounceEnabled] = useState<boolean>(() => {
-    return localStorage.getItem('medivoce_voice_announce') !== 'false'; // true by default
+    return localStorage.getItem('ricordaconvoce_voice_announce') !== 'false'; // true by default
   });
   
   const [appTheme, setAppTheme] = useState<'light' | 'dark' | 'warm'>(() => {
-    return (localStorage.getItem('medivoce_theme') as 'light' | 'dark' | 'warm') || 'light';
+    return (localStorage.getItem('ricordaconvoce_theme') as 'light' | 'dark' | 'warm') || 'light';
   });
 
   const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
-    return (localStorage.getItem('medivoce_color_theme') as ColorTheme) || 'blue';
+    return (localStorage.getItem('ricordaconvoce_color_theme') as ColorTheme) || 'blue';
   });
 
   const [alwaysOnDisplay, setAlwaysOnDisplay] = useState<boolean>(() => {
-    return localStorage.getItem('medivoce_alwayson') === 'true'; // false by default
+    return localStorage.getItem('ricordaconvoce_alwayson') === 'true'; // false by default
   });
 
   const [langDropdownOpen, setLangDropdownOpen] = useState<boolean>(false);
 
   // Custom imported sounds
   const [importedSounds, setImportedSounds] = useState<{ id: string; name: string; dataUrl: string }[]>(() => {
-    const saved = localStorage.getItem('medivoce_custom_sounds');
+    const saved = localStorage.getItem('ricordaconvoce_custom_sounds');
     return saved ? JSON.parse(saved) : [];
   });
   const [showImportSoundsModal, setShowImportSoundsModal] = useState<boolean>(false);
@@ -435,7 +435,7 @@ export default function App() {
       }
     };
 
-    window.addEventListener('medivoce-speech', handleSpeechEvent as any);
+    window.addEventListener('ricordaconvoce-speech', handleSpeechEvent as any);
 
     const timer = setInterval(() => {
       const isNativeSpeaking = (window as any).isSpeakingNatively === true;
@@ -456,7 +456,7 @@ export default function App() {
     }, 200);
 
     return () => {
-      window.removeEventListener('medivoce-speech', handleSpeechEvent as any);
+      window.removeEventListener('ricordaconvoce-speech', handleSpeechEvent as any);
       clearInterval(timer);
     };
   }, []);
@@ -482,43 +482,43 @@ export default function App() {
 
   // Persistence hooks
   useEffect(() => {
-    localStorage.setItem('medivoce_meds', JSON.stringify(medications));
+    localStorage.setItem('ricordaconvoce_meds', JSON.stringify(medications));
   }, [medications]);
 
   useEffect(() => {
-    localStorage.setItem('medivoce_custom_sounds', JSON.stringify(importedSounds));
+    localStorage.setItem('ricordaconvoce_custom_sounds', JSON.stringify(importedSounds));
   }, [importedSounds]);
 
   useEffect(() => {
-    localStorage.setItem('medivoce_notes', JSON.stringify(notes));
+    localStorage.setItem('ricordaconvoce_notes', JSON.stringify(notes));
   }, [notes]);
 
   useEffect(() => {
-    localStorage.setItem('medivoce_vibration', vibrationEnabled.toString());
+    localStorage.setItem('ricordaconvoce_vibration', vibrationEnabled.toString());
   }, [vibrationEnabled]);
 
   useEffect(() => {
-    localStorage.setItem('medivoce_voice_announce', voiceAnnounceEnabled.toString());
+    localStorage.setItem('ricordaconvoce_voice_announce', voiceAnnounceEnabled.toString());
   }, [voiceAnnounceEnabled]);
 
   useEffect(() => {
-    localStorage.setItem('medivoce_theme', appTheme);
+    localStorage.setItem('ricordaconvoce_theme', appTheme);
   }, [appTheme]);
 
   useEffect(() => {
-    localStorage.setItem('medivoce_color_theme', colorTheme);
+    localStorage.setItem('ricordaconvoce_color_theme', colorTheme);
   }, [colorTheme]);
 
   useEffect(() => {
-    localStorage.setItem('medivoce_alwayson', alwaysOnDisplay.toString());
+    localStorage.setItem('ricordaconvoce_alwayson', alwaysOnDisplay.toString());
   }, [alwaysOnDisplay]);
 
   useEffect(() => {
-    localStorage.setItem('medivoce_speech_speed', speechSpeed.toString());
+    localStorage.setItem('ricordaconvoce_speech_speed', speechSpeed.toString());
   }, [speechSpeed]);
 
   useEffect(() => {
-    localStorage.setItem('medivoce_speech_tone', speechTone);
+    localStorage.setItem('ricordaconvoce_speech_tone', speechTone);
   }, [speechTone]);
 
   useEffect(() => {
@@ -533,7 +533,7 @@ export default function App() {
             speechTone
           );
         } catch (e) {
-          console.error("[MediVoce] Failed to save preferences to native:", e);
+          console.error("[RicordaConVoce] Failed to save preferences to native:", e);
         }
       }
     }
@@ -660,7 +660,7 @@ export default function App() {
                   }
                   
                   if (!isSnoozedOrDismissed && activeVoiceReminder?.id !== med.id) {
-                    console.log("[MediVoce] Auto-triggering scheduled dose (grace period):", med.name, "at", timeSlot);
+                    console.log("[RicordaConVoce] Auto-triggering scheduled dose (grace period):", med.name, "at", timeSlot);
                     activateVoiceRemindSystem(med, timeSlot);
                   }
                 }
@@ -689,7 +689,7 @@ export default function App() {
     // 2. Perform native synchronization
     const android = (window as any).Android;
     if (android) {
-       console.log("[MediVoce] Synchronizing medications with native AlarmManager...");
+       console.log("[RicordaConVoce] Synchronizing medications with native AlarmManager...");
        
        // Schedule or cancel each medication alarm
        medications.forEach(med => {
@@ -707,9 +707,9 @@ export default function App() {
                const dosage = med.dosage || '';
                const customVoice = med.customVoiceUri || '';
                android.scheduleAlarm(target.getTime(), slotNativeId, med.name, prompt, dosage, timeSlot, customVoice);
-               console.log(`[MediVoce] Native scheduled slot: ${med.name} at ${timeSlot} (${slotNativeId}, customVoice=${!!customVoice})`);
+               console.log(`[RicordaConVoce] Native scheduled slot: ${med.name} at ${timeSlot} (${slotNativeId}, customVoice=${!!customVoice})`);
              } catch (e) {
-               console.error(`[MediVoce] Error scheduling slot ${med.name} at ${timeSlot}:`, e);
+               console.error(`[RicordaConVoce] Error scheduling slot ${med.name} at ${timeSlot}:`, e);
              }
            });
          } else {
@@ -722,7 +722,7 @@ export default function App() {
                // ignore
              }
            }
-           console.log(`[MediVoce] Native cancelled all slots for: ${med.name}`);
+           console.log(`[RicordaConVoce] Native cancelled all slots for: ${med.name}`);
          }
        });
 
@@ -747,9 +747,9 @@ export default function App() {
            });
          });
          android.saveAlarmsToNative?.(JSON.stringify(alarmsToSave));
-         console.log("[MediVoce] Saved active alarms to native storage for BootReceiver.");
+         console.log("[RicordaConVoce] Saved active alarms to native storage for BootReceiver.");
        } catch (e) {
-         console.error("[MediVoce] Error saving alarms list to native storage:", e);
+         console.error("[RicordaConVoce] Error saving alarms list to native storage:", e);
        }
     }
   }, [medications]);
@@ -799,7 +799,7 @@ export default function App() {
           });
         }
       } catch (e) {
-        console.error("[MediVoce] Error syncing native taken slots:", e);
+        console.error("[RicordaConVoce] Error syncing native taken slots:", e);
       }
     }
   }, [medications.length]);
@@ -816,8 +816,8 @@ export default function App() {
   const handleOnboardingComplete = (selectedLang: LanguageCode) => {
     setLang(selectedLang);
     setOnboarded(true);
-    localStorage.setItem('medivoce_lang', selectedLang);
-    localStorage.setItem('medivoce_onboarded', 'true');
+    localStorage.setItem('ricordaconvoce_lang', selectedLang);
+    localStorage.setItem('ricordaconvoce_onboarded', 'true');
   };
 
   // Sound oscillator test wrapper
@@ -942,7 +942,7 @@ export default function App() {
         const nativeId = medToDelete.nativeId || Math.floor(Math.random() * 10000000);
         try {
           android.cancelAlarm(nativeId);
-          console.log(`[MediVoce] Cancelled native alarm for ${medToDelete.name} on deletion.`);
+          console.log(`[RicordaConVoce] Cancelled native alarm for ${medToDelete.name} on deletion.`);
         } catch (e) {
           console.error("Error cancelling native alarm on deletion:", e);
         }
@@ -963,7 +963,7 @@ export default function App() {
         }
         return m;
       });
-      localStorage.setItem('medivoce_meds', JSON.stringify(updated));
+      localStorage.setItem('ricordaconvoce_meds', JSON.stringify(updated));
       return updated;
     });
   };
@@ -1005,7 +1005,7 @@ export default function App() {
             try {
               android.markSlotTakenInNative(med.name, actualSlot, todayStr);
             } catch (e) {
-              console.error("[MediVoce] Error calling markSlotTakenInNative:", e);
+              console.error("[RicordaConVoce] Error calling markSlotTakenInNative:", e);
             }
           }
 
@@ -1118,7 +1118,7 @@ export default function App() {
     if (android && typeof android.hasRecordAudioPermission === 'function') {
       try {
         if (!android.hasRecordAudioPermission()) {
-          console.log("[MediVoce] Native RECORD_AUDIO permission not granted yet. Requesting...");
+          console.log("[RicordaConVoce] Native RECORD_AUDIO permission not granted yet. Requesting...");
           android.requestRecordAudioPermission();
           setSpeechConfirmError(
             lang === 'it' 
@@ -2037,7 +2037,7 @@ export default function App() {
                                 key={ln}
                                 onClick={() => {
                                   setLang(ln);
-                                  localStorage.setItem('medivoce_lang', ln);
+                                  localStorage.setItem('ricordaconvoce_lang', ln);
                                   setLangDropdownOpen(false);
                                 }}
                                 className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors ${
@@ -2384,7 +2384,7 @@ export default function App() {
                       onChange={(e) => {
                          const val = e.target.value;
                          setEmergencyPhone(val);
-                         localStorage.setItem('medivoce_emergency_number', val);
+                         localStorage.setItem('ricordaconvoce_emergency_number', val);
                       }}
                       placeholder="+39 333 1234567"
                       className="bg-white border border-gray-200 text-slate-700 font-bold focus:outline-none focus:border-accent w-full p-3 rounded-xl"

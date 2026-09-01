@@ -27,7 +27,7 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     private fun rescheduleAlarms(context: Context) {
-        val prefs = context.getSharedPreferences("MediVocePrefs", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
         val alarmsJson = prefs.getString("active_alarms", null)
         if (alarmsJson.isNullOrEmpty()) {
             Log.i(TAG, "No active alarms found to re-schedule.")

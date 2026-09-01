@@ -77,7 +77,7 @@ export function playAlarmTone(toneType: string) {
         return;
       }
 
-      const savedSounds = localStorage.getItem('medivoce_custom_sounds');
+      const savedSounds = localStorage.getItem('ricordaconvoce_custom_sounds');
       if (savedSounds) {
         try {
           const parsed = JSON.parse(savedSounds);
@@ -199,10 +199,10 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     cachedVoices = window.speechSynthesis.getVoices() || [];
     window.speechSynthesis.onvoiceschanged = () => {
       cachedVoices = window.speechSynthesis.getVoices() || [];
-      console.log('[MediVoce] Loaded voices from onvoiceschanged:', cachedVoices.map(v => `${v.name} (${v.lang})`));
+      console.log('[RicordaConVoce] Loaded voices from onvoiceschanged:', cachedVoices.map(v => `${v.name} (${v.lang})`));
     };
   } catch (e) {
-    console.error('[MediVoce] Error initializing SpeechSynthesis voices listener:', e);
+    console.error('[RicordaConVoce] Error initializing SpeechSynthesis voices listener:', e);
   }
 }
 
@@ -217,7 +217,7 @@ export function stopVoiceAudio() {
       try {
         win.Android.stopCustomVoice();
       } catch (e) {
-        console.warn('[MediVoce] Error calling native stopCustomVoice', e);
+        console.warn('[RicordaConVoce] Error calling native stopCustomVoice', e);
       }
     }
     if (nativeVoiceAudioTimeout) {
@@ -231,13 +231,13 @@ export function stopVoiceAudio() {
       currentVoiceAudio.pause();
       currentVoiceAudio.currentTime = 0;
     } catch (e) {
-      console.warn('[MediVoce] Error pausing voice audio', e);
+      console.warn('[RicordaConVoce] Error pausing voice audio', e);
     }
     currentVoiceAudio = null;
   }
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking: false } }));
+    window.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking: false } }));
   }
 }
 
@@ -257,17 +257,17 @@ export function playVoiceAudio(audioDataUrl: string, onEnded?: () => void): HTML
     // 1. Try Native Android MediaPlayer Bridge for 100% reliable hardware output
     if (win.Android && typeof win.Android.playCustomVoice === 'function') {
       try {
-        win.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking: true } }));
+        win.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking: true } }));
         win.Android.playCustomVoice(audioDataUrl);
         
         // Safety timeout for visual ripple reset (approx. 10 seconds or until finished)
         nativeVoiceAudioTimeout = setTimeout(() => {
-          win.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking: false } }));
+          win.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking: false } }));
           if (onEnded) onEnded();
         }, 8000);
         return null;
       } catch (err) {
-        console.warn('[MediVoce] Native playCustomVoice failed, falling back to Web Audio API:', err);
+        console.warn('[RicordaConVoce] Native playCustomVoice failed, falling back to Web Audio API:', err);
       }
     }
   }
@@ -278,36 +278,36 @@ export function playVoiceAudio(audioDataUrl: string, onEnded?: () => void): HTML
     currentVoiceAudio = audio;
 
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking: true } }));
+      window.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking: true } }));
     }
 
     audio.onended = () => {
       currentVoiceAudio = null;
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking: false } }));
+        window.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking: false } }));
       }
       if (onEnded) onEnded();
     };
 
     audio.onerror = (e) => {
-      console.error('[MediVoce] Error playing custom voice recording:', e);
+      console.error('[RicordaConVoce] Error playing custom voice recording:', e);
       currentVoiceAudio = null;
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking: false } }));
+        window.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking: false } }));
       }
     };
 
     audio.play().catch(e => {
-      console.error('[MediVoce] audio.play() failed for custom voice recording:', e);
+      console.error('[RicordaConVoce] audio.play() failed for custom voice recording:', e);
       currentVoiceAudio = null;
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking: false } }));
+        window.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking: false } }));
       }
     });
 
     return audio;
   } catch (err) {
-    console.error('[MediVoce] Failed to instantiate audio for recorded voice:', err);
+    console.error('[RicordaConVoce] Failed to instantiate audio for recorded voice:', err);
     return null;
   }
 }
@@ -322,14 +322,14 @@ export function stopSpeaking() {
       win.nativeSpeechTimeoutId = null;
     }
     win.isSpeakingNatively = false;
-    win.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking: false } }));
+    win.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking: false } }));
     
     const android = win.Android;
     if (android && typeof android.stopSpeaking === 'function') {
       try {
         android.stopSpeaking();
       } catch (e) {
-        console.error('[MediVoce] Failed to call native stopSpeaking', e);
+        console.error('[RicordaConVoce] Failed to call native stopSpeaking', e);
       }
     }
   }
@@ -338,7 +338,7 @@ export function stopSpeaking() {
     try {
       window.speechSynthesis.cancel();
     } catch (e) {
-      console.error('[MediVoce] Failed to cancel Web SpeechSynthesis', e);
+      console.error('[RicordaConVoce] Failed to cancel Web SpeechSynthesis', e);
     }
   }
 }
@@ -363,7 +363,7 @@ export function speakAnnouncement(
     if (android && typeof android.speak === 'function') {
       try {
         win.isSpeakingNatively = true;
-        win.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking: true } }));
+        win.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking: true } }));
         
         // Calculate estimated speech duration to animate the visual soundwave accurately
         const wordsCount = text.split(/\s+/).length;
@@ -372,13 +372,13 @@ export function speakAnnouncement(
         
         win.nativeSpeechTimeoutId = setTimeout(() => {
           win.isSpeakingNatively = false;
-          win.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking: false } }));
+          win.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking: false } }));
         }, estimatedDurationMs);
 
         android.speak(text, lang, speed, toneType);
         return;
       } catch (e) {
-        console.error('[MediVoce] Native TTS call failed, falling back to Web Speech API:', e);
+        console.error('[RicordaConVoce] Native TTS call failed, falling back to Web Speech API:', e);
         win.isSpeakingNatively = false;
         if (win.nativeSpeechTimeoutId) {
           clearTimeout(win.nativeSpeechTimeoutId);
@@ -438,7 +438,7 @@ export function speakAnnouncement(
 
       const dispatchSpeechEvent = (speaking: boolean) => {
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('medivoce-speech', { detail: { speaking } }));
+          window.dispatchEvent(new CustomEvent('ricordaconvoce-speech', { detail: { speaking } }));
         }
       };
 
@@ -451,7 +451,7 @@ export function speakAnnouncement(
       try {
         allVoices = window.speechSynthesis.getVoices() || [];
       } catch (e) {
-        console.warn('[MediVoce] Failed to get voices from window.speechSynthesis, using cache:', e);
+        console.warn('[RicordaConVoce] Failed to get voices from window.speechSynthesis, using cache:', e);
       }
       if (!allVoices || allVoices.length === 0) {
         allVoices = cachedVoices;
@@ -508,7 +508,7 @@ export function speakAnnouncement(
 
         if (selectedVoice) {
           utterance.voice = selectedVoice;
-          console.log(`[MediVoce] Selected female speech voice: ${selectedVoice.name} (Local: ${selectedVoice.localService}, Lang: ${selectedVoice.lang})`);
+          console.log(`[RicordaConVoce] Selected female speech voice: ${selectedVoice.name} (Local: ${selectedVoice.localService}, Lang: ${selectedVoice.lang})`);
         }
       }
 
@@ -526,9 +526,9 @@ export function speakAnnouncement(
       utterance.onerror = (err) => {
         dispatchSpeechEvent(false);
         if (err.error === 'interrupted' || err.error === 'canceled') {
-          console.log('[MediVoce] SpeechSynthesis interrupted or canceled normally:', err.error);
+          console.log('[RicordaConVoce] SpeechSynthesis interrupted or canceled normally:', err.error);
         } else {
-          console.error('[MediVoce] SpeechSynthesis error:', err.error);
+          console.error('[RicordaConVoce] SpeechSynthesis error:', err.error);
         }
         if (typeof window !== 'undefined') {
           const win = window as any;
@@ -539,7 +539,7 @@ export function speakAnnouncement(
 
         // Don't rerun fallback if the error was just "interrupted" or "canceled" via manual stop/cancel
         if (err.error !== 'interrupted' && err.error !== 'canceled') {
-          console.warn('[MediVoce] SpeechSynthesis failed. Retrying with default device voice engine...');
+          console.warn('[RicordaConVoce] SpeechSynthesis failed. Retrying with default device voice engine...');
           const fallbackUtterance = new SpeechSynthesisUtterance(text);
           fallbackUtterance.lang = targetLocale;
           fallbackUtterance.rate = speed;
@@ -567,7 +567,7 @@ export function speakAnnouncement(
           try {
             window.speechSynthesis.speak(fallbackUtterance);
           } catch (e) {
-            console.error('[MediVoce] Fallback speech trigger failed:', e);
+            console.error('[RicordaConVoce] Fallback speech trigger failed:', e);
           }
         }
       };
@@ -580,20 +580,20 @@ export function speakAnnouncement(
             win._activeUtterances.delete(utterance);
           }
         }
-        console.log('[MediVoce] Speech completed successfully.');
+        console.log('[RicordaConVoce] Speech completed successfully.');
       };
 
       // Speak!
       try {
         window.speechSynthesis.speak(utterance);
       } catch (e) {
-        console.error('[MediVoce] Direct speech trigger failed:', e);
+        console.error('[RicordaConVoce] Direct speech trigger failed:', e);
         dispatchSpeechEvent(false);
       }
     }, 250);
 
   } catch (error) {
-    console.error('[MediVoce] Exception during speakAnnouncement:', error);
+    console.error('[RicordaConVoce] Exception during speakAnnouncement:', error);
   }
 }
 

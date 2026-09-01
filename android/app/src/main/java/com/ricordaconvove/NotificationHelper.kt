@@ -9,7 +9,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 
 object NotificationHelper {
-    private const val CHANNEL_ID = "medivoce_critical_reminders"
+    private const val CHANNEL_ID = "ricordaconvoce_critical_reminders"
     private const val CHANNEL_NAME = "Promemoria Vocali Ricorda con Voce"
 
     fun showNotification(

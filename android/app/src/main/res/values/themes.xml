@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema Principale dell'Applicazione -->
+    <style name="Theme.RicordaConVoce" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="android:windowBackground">@color/splashBackground</item>
+    </style>
+
+    <!-- Tema Splash Screen compatibile con Android 12+ e versioni precedenti -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Colore di sfondo azzurro/turchese uguale all'icona -->
+        <item name="windowSplashScreenBackground">@color/splashBackground</item>
+        
+        <!-- Icona al centro della SplashScreen -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        
+        <!-- Tema applicato automaticamente al termine dello Splash Screen -->
+        <item name="postSplashScreenTheme">@style/Theme.RicordaConVoce</item>
+    </style>
+</resources>

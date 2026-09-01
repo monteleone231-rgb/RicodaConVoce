@@ -15,11 +15,14 @@ import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.webkit.ValueCallback
 import android.net.Uri
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.getcapacitor.BridgeActivity
 import org.json.JSONArray
 import org.json.JSONObject
@@ -29,15 +32,28 @@ import java.io.FileOutputStream
 import java.util.Locale
 
 class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
-    private val TAG_NATIVE = "MediVoceNative"
+    private val TAG_NATIVE = "RicordaConVoceNative"
     private lateinit var scheduler: AlarmScheduler
     private var tts: TextToSpeech? = null
     private var isTtsInitialized = false
+
+    // Flag per tenere attiva la SplashScreen nativa finché la WebView non ha caricato l'interfaccia
+    private var isPageReady = false
+
     @Volatile
     var cachedSoundsJson: String = "[]"
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 1. Inizializza la Splash Screen API PRIMA di super.onCreate()
+        val splashScreen = installSplashScreen()
+
         super.onCreate(savedInstanceState)
+
+        // 2. Blocca la Splash Screen finché la pagina web non è completamente pronta
+        splashScreen.setKeepOnScreenCondition {
+            !isPageReady
+        }
+
         scheduler = AlarmScheduler(this)
         
         try {
@@ -71,6 +87,9 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
         }.start()
 
         bridge?.webView?.let { webView ->
+            // Imposta lo sfondo della WebView su azzurro per eliminare qualsiasi flash bianco transitorio
+            webView.setBackgroundColor(android.graphics.Color.parseColor("#00B4D8"))
+
             webView.settings.javaScriptEnabled = true
             webView.settings.mediaPlaybackRequiresUserGesture = false
             webView.settings.domStorageEnabled = true
@@ -78,6 +97,17 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
 
             webView.addJavascriptInterface(AndroidInterface(this, this, scheduler), "Android")
             Log.d(TAG_NATIVE, "Custom JavaScript Interface 'Android' successfully registered.")
+
+            // Intercetta onPageFinished per sbloccare la Splash Screen non appena la Web UI è renderizzata
+            val originalWebViewClient = webView.webViewClient
+            webView.webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    originalWebViewClient?.onPageFinished(view, url)
+                    isPageReady = true
+                    Log.d(TAG_NATIVE, "WebView page finished loading. Dismissing native SplashScreen.")
+                }
+            }
 
             // Set custom WebChromeClient wrapper to safely grant web microphone permissions while delegating to Capacitor's original chrome client
             val originalChromeClient = webView.webChromeClient
@@ -106,7 +136,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 }
 
                 override fun onShowFileChooser(
-                    webView: android.webkit.WebView?,
+                    webView: WebView?,
                     filePathCallback: ValueCallback<Array<Uri>>?,
                     fileChooserParams: FileChooserParams?
                 ): Boolean {
@@ -114,6 +144,14 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 }
             }
         }
+
+        // Timeout di sicurezza per sbloccare la splash screen in ogni circostanza dopo max 3 secondi
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            if (!isPageReady) {
+                isPageReady = true
+                Log.d(TAG_NATIVE, "Safety timeout reached: force dismissing SplashScreen.")
+            }
+        }, 3000)
 
         // Request runtime microphone permission on startup if not already granted (Android M/6.0+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -155,7 +193,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
             tts?.setPitch(pitch)
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "medivoce_speech")
+                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ricordaconvoce_speech")
             } else {
                 @Suppress("DEPRECATION")
                 tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
@@ -219,11 +257,11 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                         fos.write(audioBytes)
                         fos.flush()
                     }
-                    Log.d("MediVoceNative", "Saved custom voice file for ID $id (${audioBytes.size} bytes) at ${targetFile.absolutePath}")
+                    Log.d("RicordaConVoceNative", "Saved custom voice file for ID $id (${audioBytes.size} bytes) at ${targetFile.absolutePath}")
                     return targetFile.absolutePath
                 }
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error saving custom voice data to file for ID $id", e)
+                Log.e("RicordaConVoceNative", "Error saving custom voice data to file for ID $id", e)
             }
             return null
         }
@@ -271,7 +309,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     player.setVolume(1.0f, 1.0f)
                     player.setOnPreparedListener { mp ->
                         mp.start()
-                        Log.d("MediVoceNative", "Playing custom voice natively.")
+                        Log.d("RicordaConVoceNative", "Playing custom voice natively.")
                     }
                     player.setOnCompletionListener { mp ->
                         mp.release()
@@ -290,7 +328,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     customVoicePlayer = player
                 }
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error in playCustomVoice", e)
+                Log.e("RicordaConVoceNative", "Error in playCustomVoice", e)
             }
         }
 
@@ -302,9 +340,9 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     it.release()
                 }
                 customVoicePlayer = null
-                Log.d("MediVoceNative", "Stopped custom voice playback.")
+                Log.d("RicordaConVoceNative", "Stopped custom voice playback.")
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error stopping custom voice player", e)
+                Log.e("RicordaConVoceNative", "Error stopping custom voice player", e)
             }
         }
 
@@ -324,7 +362,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
                 }
                 if (vibrator == null || !vibrator.hasVibrator()) {
-                    Log.w("MediVoceNative", "vibrate: Device does not have a vibrator motor")
+                    Log.w("RicordaConVoceNative", "vibrate: Device does not have a vibrator motor")
                     return
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -333,9 +371,9 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     @Suppress("DEPRECATION")
                     vibrator.vibrate(durationMillis)
                 }
-                Log.d("MediVoceNative", "Vibrated native device for $durationMillis ms")
+                Log.d("RicordaConVoceNative", "Vibrated native device for $durationMillis ms")
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error in native vibration", e)
+                Log.e("RicordaConVoceNative", "Error in native vibration", e)
             }
         }
 
@@ -343,7 +381,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
         fun getDeviceSounds(): String {
             val cached = (activity as? MainActivity)?.cachedSoundsJson
             if (cached != null && cached != "[]") {
-                Log.d("MediVoceNative", "Returning cached device sounds instantly.")
+                Log.d("RicordaConVoceNative", "Returning cached device sounds instantly.")
                 return cached
             }
             // Fallback (should rarely occur, but is safe in case cache isn't fully loaded yet)
@@ -363,7 +401,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     }
                 }
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error querying device sounds in fallback", e)
+                Log.e("RicordaConVoceNative", "Error querying device sounds in fallback", e)
             }
             return ringtonesList.toString()
         }
@@ -375,9 +413,9 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 val uri = uriString.toUri()
                 currentRingtone = RingtoneManager.getRingtone(context, uri)
                 currentRingtone?.play()
-                Log.d("MediVoceNative", "Playing device sound: $uriString")
+                Log.d("RicordaConVoceNative", "Playing device sound: $uriString")
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error playing device sound", e)
+                Log.e("RicordaConVoceNative", "Error playing device sound", e)
             }
         }
 
@@ -390,9 +428,9 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     }
                 }
                 currentRingtone = null
-                Log.d("MediVoceNative", "Stopped device sound playback")
+                Log.d("RicordaConVoceNative", "Stopped device sound playback")
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error stopping device sound", e)
+                Log.e("RicordaConVoceNative", "Error stopping device sound", e)
             }
         }
 
@@ -412,19 +450,19 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 ""
             }
             scheduler.scheduleExactAlarm(timeMillis, id, name, voicePrompt, dosage, timeSlot, customVoicePath)
-            Log.d("MediVoceNative", "Scheduled alarm: $name (ID: $id) at $timeMillis, customVoicePath: '$customVoicePath'")
+            Log.d("RicordaConVoceNative", "Scheduled alarm: $name (ID: $id) at $timeMillis, customVoicePath: '$customVoicePath'")
         }
 
         @JavascriptInterface
         fun getTakenSlotsFromNative(): String {
-            val prefs = context.getSharedPreferences("MediVocePrefs", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
             return prefs.getString("taken_slots_json", "[]") ?: "[]"
         }
 
         @JavascriptInterface
         fun markSlotTakenInNative(medName: String, timeSlot: String, dateStr: String) {
             try {
-                val prefs = context.getSharedPreferences("MediVocePrefs", Context.MODE_PRIVATE)
+                val prefs = context.getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
                 val currentJsonStr = prefs.getString("taken_slots_json", "[]") ?: "[]"
                 val array = JSONArray(currentJsonStr)
                 val key = "${medName}_${timeSlot}_$dateStr"
@@ -437,7 +475,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     prefs.edit { putString("taken_slots_json", array.toString()) }
                 }
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error marking slot taken in native", e)
+                Log.e("RicordaConVoceNative", "Error marking slot taken in native", e)
             }
         }
 
@@ -450,9 +488,9 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     voiceFile.delete()
                 }
             } catch (e: Exception) {
-                Log.w("MediVoceNative", "Error deleting custom voice file for cancelled alarm ID $id", e)
+                Log.w("RicordaConVoceNative", "Error deleting custom voice file for cancelled alarm ID $id", e)
             }
-            Log.d("MediVoceNative", "Cancelled alarm ID: $id")
+            Log.d("RicordaConVoceNative", "Cancelled alarm ID: $id")
         }
 
         @JavascriptInterface
@@ -476,14 +514,14 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 }
 
                 val finalJson = processedArray.toString()
-                val prefs = context.getSharedPreferences("MediVocePrefs", Context.MODE_PRIVATE)
+                val prefs = context.getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
                 prefs.edit {
                     putString("active_alarms", finalJson)
                 }
-                Log.d("MediVoceNative", "Saved alarms with custom voice paths to native storage (${processedArray.length()} items).")
+                Log.d("RicordaConVoceNative", "Saved alarms with custom voice paths to native storage (${processedArray.length()} items).")
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error parsing and saving active alarms", e)
-                val prefs = context.getSharedPreferences("MediVocePrefs", Context.MODE_PRIVATE)
+                Log.e("RicordaConVoceNative", "Error parsing and saving active alarms", e)
+                val prefs = context.getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
                 prefs.edit {
                     putString("active_alarms", alarmsJson)
                 }
@@ -492,14 +530,14 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
 
         @JavascriptInterface
         fun savePreferencesToNative(lang: String, voiceEnabled: Boolean, speed: Double, tone: String) {
-            val prefs = context.getSharedPreferences("MediVocePrefs", Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
             prefs.edit {
                 putString("lang", lang)
                 putBoolean("voiceEnabled", voiceEnabled)
                 putFloat("speed", speed.toFloat())
                 putString("tone", tone)
             }
-            Log.d("MediVoceNative", "Saved preferences to native storage: lang=$lang, voiceEnabled=$voiceEnabled, speed=$speed, tone=$tone")
+            Log.d("RicordaConVoceNative", "Saved preferences to native storage: lang=$lang, voiceEnabled=$voiceEnabled, speed=$speed, tone=$tone")
         }
 
         private var nativeMediaRecorder: MediaRecorder? = null
@@ -517,7 +555,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     }
                 }
                 cancelNativeVoiceRecording()
-                val outputFile = File(context.cacheDir, "medivoce_voice_temp.m4a")
+                val outputFile = File(context.cacheDir, "ricordaconvoce_voice_temp.m4a")
                 if (outputFile.exists()) {
                     outputFile.delete()
                 }
@@ -539,10 +577,10 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 recorder.prepare()
                 recorder.start()
                 nativeMediaRecorder = recorder
-                Log.d("MediVoceNative", "Native MediaRecorder started successfully.")
+                Log.d("RicordaConVoceNative", "Native MediaRecorder started successfully.")
                 true
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Failed to start native audio recording", e)
+                Log.e("RicordaConVoceNative", "Failed to start native audio recording", e)
                 nativeMediaRecorder = null
                 false
             }
@@ -555,7 +593,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     try {
                         it.stop()
                     } catch (e: Exception) {
-                        Log.w("MediVoceNative", "stop error on MediaRecorder", e)
+                        Log.w("RicordaConVoceNative", "stop error on MediaRecorder", e)
                     }
                     it.release()
                 }
@@ -565,13 +603,13 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 if (file != null && file.exists() && file.length() > 0) {
                     val bytes = file.readBytes()
                     val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
-                    Log.d("MediVoceNative", "Native voice recorded: ${bytes.size} bytes")
+                    Log.d("RicordaConVoceNative", "Native voice recorded: ${bytes.size} bytes")
                     "data:audio/mp4;base64,$base64"
                 } else {
                     ""
                 }
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error stopping native voice recording", e)
+                Log.e("RicordaConVoceNative", "Error stopping native voice recording", e)
                 nativeMediaRecorder = null
                 ""
             }
@@ -587,7 +625,7 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     it.release()
                 }
             } catch (e: Exception) {
-                Log.w("MediVoceNative", "Error cancelling native recording", e)
+                Log.w("RicordaConVoceNative", "Error cancelling native recording", e)
             } finally {
                 nativeMediaRecorder = null
             }
@@ -618,9 +656,9 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 intent.data = android.net.Uri.parse("package:" + context.packageName)
                 intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(intent)
-                Log.d("MediVoceNative", "Opened app settings.")
+                Log.d("RicordaConVoceNative", "Opened app settings.")
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error opening app settings", e)
+                Log.e("RicordaConVoceNative", "Error opening app settings", e)
             }
         }
 
@@ -638,9 +676,9 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 }
                 intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(intent)
-                Log.d("MediVoceNative", "Opened notification settings.")
+                Log.d("RicordaConVoceNative", "Opened notification settings.")
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error opening notification settings", e)
+                Log.e("RicordaConVoceNative", "Error opening notification settings", e)
                 openAppSettings()
             }
         }
@@ -653,12 +691,12 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     intent.data = android.net.Uri.parse("package:" + context.packageName)
                     intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
                     context.startActivity(intent)
-                    Log.d("MediVoceNative", "Opened exact alarm settings.")
+                    Log.d("RicordaConVoceNative", "Opened exact alarm settings.")
                 } else {
                     openAppSettings()
                 }
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error opening exact alarm settings", e)
+                Log.e("RicordaConVoceNative", "Error opening exact alarm settings", e)
                 openAppSettings()
             }
         }
@@ -674,9 +712,9 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 }
                 intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(intent)
-                Log.d("MediVoceNative", "Opened battery optimization settings.")
+                Log.d("RicordaConVoceNative", "Opened battery optimization settings.")
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error opening battery settings", e)
+                Log.e("RicordaConVoceNative", "Error opening battery settings", e)
                 openAppSettings()
             }
         }
@@ -689,12 +727,12 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     intent.data = android.net.Uri.parse("package:" + context.packageName)
                     intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
                     context.startActivity(intent)
-                    Log.d("MediVoceNative", "Opened overlay settings.")
+                    Log.d("RicordaConVoceNative", "Opened overlay settings.")
                 } else {
                     openAppSettings()
                 }
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error opening overlay settings", e)
+                Log.e("RicordaConVoceNative", "Error opening overlay settings", e)
                 openAppSettings()
             }
         }
@@ -707,12 +745,12 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                     intent.data = android.net.Uri.parse("package:" + context.packageName)
                     intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
                     context.startActivity(intent)
-                    Log.d("MediVoceNative", "Opened full screen intent settings (Android 14+).")
+                    Log.d("RicordaConVoceNative", "Opened full screen intent settings (Android 14+).")
                 } else {
                     openNotificationSettings()
                 }
             } catch (e: Exception) {
-                Log.e("MediVoceNative", "Error opening full screen intent settings", e)
+                Log.e("RicordaConVoceNative", "Error opening full screen intent settings", e)
                 openNotificationSettings()
             }
         }

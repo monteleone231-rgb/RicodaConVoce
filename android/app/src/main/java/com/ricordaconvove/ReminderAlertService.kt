@@ -74,7 +74,7 @@ class ReminderAlertService : Service(), TextToSpeech.OnInitListener {
         // 2. Check SharedPreferences fallback
         if (!hasCustomVoice || voicePrompt.isBlank()) {
             try {
-                val prefs = getSharedPreferences("MediVocePrefs", Context.MODE_PRIVATE)
+                val prefs = getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
                 val alarmsJson = prefs.getString("active_alarms", null)
                 if (!alarmsJson.isNullOrEmpty()) {
                     val array = org.json.JSONArray(alarmsJson)
@@ -232,7 +232,7 @@ class ReminderAlertService : Service(), TextToSpeech.OnInitListener {
         }
 
         if (status == TextToSpeech.SUCCESS) {
-            val prefs = getSharedPreferences("MediVocePrefs", Context.MODE_PRIVATE)
+            val prefs = getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
             val lang = prefs.getString("lang", "it") ?: "it"
             val voiceEnabled = prefs.getBoolean("voiceEnabled", true)
             val speed = prefs.getFloat("speed", 0.75f)

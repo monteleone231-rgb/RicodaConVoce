@@ -78,7 +78,7 @@ class FullScreenAlertActivity : ComponentActivity() {
     private fun markSlotTaken(medName: String, timeSlot: String) {
         try {
             val todayDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-            val prefs = getSharedPreferences("MediVocePrefs", Context.MODE_PRIVATE)
+            val prefs = getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
             val currentJsonStr = prefs.getString("taken_slots_json", "[]") ?: "[]"
             val array = org.json.JSONArray(currentJsonStr)
             val key = "${medName}_${timeSlot}_$todayDate"

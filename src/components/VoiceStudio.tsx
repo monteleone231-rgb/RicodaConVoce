@@ -41,7 +41,7 @@ export const VoiceStudio: React.FC<VoiceStudioProps> = ({
   // Saved voices storage state
   const [savedVoices, setSavedVoices] = useState<SavedVoiceItem[]>(() => {
     try {
-      const stored = localStorage.getItem('medivoce_saved_voices');
+      const stored = localStorage.getItem('ricordaconvoce_saved_voices');
       if (stored) {
         return JSON.parse(stored);
       }
@@ -77,7 +77,7 @@ export const VoiceStudio: React.FC<VoiceStudioProps> = ({
   // Save to localStorage when savedVoices changes
   useEffect(() => {
     try {
-      localStorage.setItem('medivoce_saved_voices', JSON.stringify(savedVoices));
+      localStorage.setItem('ricordaconvoce_saved_voices', JSON.stringify(savedVoices));
     } catch (e) {
       console.error('Error persisting saved voices:', e);
     }
@@ -650,14 +650,14 @@ export const VoiceStudio: React.FC<VoiceStudioProps> = ({
 
       {/* SECTION 2: PROMEMORIA & STATO VOCE (TUTTI I PROMEMORIA) */}
       <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-blue-600" />
-            <h3 className="text-base font-black text-slate-800">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <Layers className="w-5 h-5 text-blue-600 shrink-0" />
+            <h3 className="text-base font-black text-slate-800 truncate">
               {t.voiceStudioRemindersStatusTitle}
             </h3>
           </div>
-          <span className="text-xs font-black text-slate-400">
+          <span className="text-xs font-black text-slate-400 shrink-0 mr-2 sm:mr-3 whitespace-nowrap">
             {medications.length} {t.voiceStudioTotalCount}
           </span>
         </div>
@@ -783,12 +783,12 @@ export const VoiceStudio: React.FC<VoiceStudioProps> = ({
 
       {/* SECTION 3: ARCHIVIO VOCI SALVATE (SAVED VOICES LIBRARY) */}
       <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Volume2 className="w-5 h-5 text-indigo-600" />
-            <h3 className="text-base font-black text-slate-800">{t.voiceStudioSavedLibrary}</h3>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <Volume2 className="w-5 h-5 text-indigo-600 shrink-0" />
+            <h3 className="text-base font-black text-slate-800 truncate">{t.voiceStudioSavedLibrary}</h3>
           </div>
-          <span className="text-xs font-black text-slate-400">
+          <span className="text-xs font-black text-slate-400 shrink-0 mr-2 sm:mr-3 whitespace-nowrap">
             {savedVoices.length} {t.voiceStudioRecordedCount}
           </span>
         </div>

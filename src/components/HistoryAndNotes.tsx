@@ -29,7 +29,7 @@ export default function HistoryAndNotes({ lang, medications, notes, onAddNote, o
   // Wellbeing and Share State
   const [wellBeingLogs, setWellBeingLogs] = useState<{[key: string]: number}>(() => {
     try {
-      const stored = localStorage.getItem('medivoce_wellbeing_logs');
+      const stored = localStorage.getItem('ricordaconvoce_wellbeing_logs');
       return stored ? JSON.parse(stored) : {};
     } catch {
       return {};
@@ -43,7 +43,7 @@ export default function HistoryAndNotes({ lang, medications, notes, onAddNote, o
   const handleSetWellBeing = (score: number) => {
     const updated = { ...wellBeingLogs, [todayStr]: score };
     setWellBeingLogs(updated);
-    localStorage.setItem('medivoce_wellbeing_logs', JSON.stringify(updated));
+    localStorage.setItem('ricordaconvoce_wellbeing_logs', JSON.stringify(updated));
   };
 
   const handleCopyReport = () => {
