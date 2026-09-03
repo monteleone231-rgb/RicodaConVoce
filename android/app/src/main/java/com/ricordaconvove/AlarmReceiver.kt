@@ -12,7 +12,7 @@ class AlarmReceiver : BroadcastReceiver() {
         const val ACTION_SNOOZE = "com.ricordaconvove.ACTION_SNOOZE"
         private const val TAG = "AlarmReceiver"
         private const val WAKELOCK_TIMEOUT_MS = 60000L // 1 minute
-        const val AUTO_SNOOZE_CALL_MINUTES = 5 // Auto-posticipo dopo 5 minuti durante una chiamata
+        const val AUTO_SNOOZE_CALL_MINUTES = 10 // Auto-posticipo dopo 10 minuti durante una chiamata
         const val MANUAL_SNOOZE_MINUTES = 10 // Posticipo manuale di 10 minuti
     }
 

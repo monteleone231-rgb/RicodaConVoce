@@ -98,7 +98,7 @@ object NotificationHelper {
             .setFullScreenIntent(fullScreenPendingIntent, true)
             .setAutoCancel(true)
             .setOngoing(true)
-            .setShowBadge(true)
+            .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
             .setNumber(1)
 
         notificationManager.notify(id, builder.build())
@@ -119,7 +119,7 @@ object NotificationHelper {
         dosage: String = "",
         timeSlot: String = "",
         customVoicePath: String = "",
-        snoozeMinutes: Int = 5
+        snoozeMinutes: Int = 10
     ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -144,36 +144,36 @@ object NotificationHelper {
         val prefs = context.getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
         val lang = prefs.getString("lang", "it") ?: "it"
 
-        val (titleText, bodyText, btnTakenText, btnSnoozeText) = when {
-            lang.startsWith("es") -> Quadruple(
-                "📞 Recordatorio: $medName",
-                if (dosage.isNotBlank()) "$medName ($dosage) • Alarma vocal en $snoozeMinutes min" else "$medName • Alarma vocal en $snoozeMinutes min",
-                "Hecho",
-                "Posponer (10m)"
+        val strings = when {
+            lang.startsWith("es") -> CallNotificationStrings(
+                title = "📞 Recordatorio: $medName",
+                body = if (dosage.isNotBlank()) "$medName ($dosage) • Alarma vocal en $snoozeMinutes min" else "$medName • Alarma vocal en $snoozeMinutes min",
+                btnTaken = "Hecho",
+                btnSnooze = "Posponer (10m)"
             )
-            lang.startsWith("fr") -> Quadruple(
-                "📞 Rappel: $medName",
-                if (dosage.isNotBlank()) "$medName ($dosage) • Alerte vocale dans $snoozeMinutes min" else "$medName • Alerte vocale dans $snoozeMinutes min",
-                "Pris",
-                "Reporter (10m)"
+            lang.startsWith("fr") -> CallNotificationStrings(
+                title = "📞 Rappel: $medName",
+                body = if (dosage.isNotBlank()) "$medName ($dosage) • Alerte vocale dans $snoozeMinutes min" else "$medName • Alerte vocale dans $snoozeMinutes min",
+                btnTaken = "Fait",
+                btnSnooze = "Reporter (10m)"
             )
-            lang.startsWith("de") -> Quadruple(
-                "📞 Erinnerung: $medName",
-                if (dosage.isNotBlank()) "$medName ($dosage) • Sprachalarm in $snoozeMinutes Min",
-                "Erledigt",
-                "Schlummern (10m)"
+            lang.startsWith("de") -> CallNotificationStrings(
+                title = "📞 Erinnerung: $medName",
+                body = if (dosage.isNotBlank()) "$medName ($dosage) • Sprachalarm in $snoozeMinutes Min" else "$medName • Sprachalarm in $snoozeMinutes Min",
+                btnTaken = "Erledigt",
+                btnSnooze = "Schlummern (10m)"
             )
-            lang.startsWith("en") -> Quadruple(
-                "📞 Reminder: $medName",
-                if (dosage.isNotBlank()) "$medName ($dosage) • Voice alert in $snoozeMinutes min" else "$medName • Voice alert in $snoozeMinutes min",
-                "Taken",
-                "Snooze (10m)"
+            lang.startsWith("en") -> CallNotificationStrings(
+                title = "📞 Reminder: $medName",
+                body = if (dosage.isNotBlank()) "$medName ($dosage) • Voice alert in $snoozeMinutes min" else "$medName • Voice alert in $snoozeMinutes min",
+                btnTaken = "Done",
+                btnSnooze = "Snooze (10m)"
             )
-            else -> Quadruple(
-                "📞 Promemoria: $medName",
-                if (dosage.isNotBlank()) "$medName ($dosage) • Allarme vocale tra $snoozeMinutes min" else "$medName • Allarme vocale tra $snoozeMinutes min",
-                "Ho preso",
-                "Posticipa (10m)"
+            else -> CallNotificationStrings(
+                title = "📞 Promemoria: $medName",
+                body = if (dosage.isNotBlank()) "$medName ($dosage) • Allarme vocale tra $snoozeMinutes min" else "$medName • Allarme vocale tra $snoozeMinutes min",
+                btnTaken = "Fatto",
+                btnSnooze = "Posticipa (10m)"
             )
         }
 
@@ -221,18 +221,17 @@ object NotificationHelper {
 
         val builder = NotificationCompat.Builder(context, CALL_QUIET_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle(titleText)
-            .setContentText(bodyText)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(bodyText))
+            .setContentTitle(strings.title)
+            .setContentText(strings.body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(strings.body))
             .setContentIntent(openAppPendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setShowBadge(true)
             .setNumber(1)
             .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
             .setAutoCancel(true)
-            .addAction(android.R.drawable.checkbox_on_background, btnTakenText, takenPendingIntent)
-            .addAction(android.R.drawable.ic_menu_recent_history, btnSnoozeText, snoozePendingIntent)
+            .addAction(android.R.drawable.checkbox_on_background, strings.btnTaken, takenPendingIntent)
+            .addAction(android.R.drawable.ic_menu_recent_history, strings.btnSnooze, snoozePendingIntent)
 
         notificationManager.notify(id, builder.build())
         Log.d(TAG, "Mostrata notifica discreta e badge per promemoria '$medName' (chiamata in corso)")
@@ -271,5 +270,10 @@ object NotificationHelper {
         notificationManager.cancel(id)
     }
 
-    private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+    private data class CallNotificationStrings(
+        val title: String,
+        val body: String,
+        val btnTaken: String,
+        val btnSnooze: String
+    )
 }

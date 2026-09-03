@@ -7,7 +7,7 @@
     <string name="welcome_message">Benvenuto in Ricorda con Voce</string>
     <string name="hint_enter_message">Scrivi un messaggio...</string>
     <string name="button_send">Invia</string>
-    <string name="button_scan">Scansiona Pillola</string>
+    <string name="button_scan">Scansiona Promemoria</string>
     <string name="button_record_voice">Registra Voce</string>
 
     <!-- Stati e Feedback -->
