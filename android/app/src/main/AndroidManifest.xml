@@ -63,10 +63,15 @@
                 android:value="Voice reminders and alarms requiring immediate full-screen vocal and audio alerting when the device is locked" />
         </service>
 
-        <!-- Alarm receiver from AlarmManager system broadcast -->
+        <!-- Alarm receiver from AlarmManager system broadcast and notification actions -->
         <receiver
             android:name=".AlarmReceiver"
-            android:exported="false" />
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.ricordaconvove.ACTION_MARK_TAKEN" />
+                <action android:name="com.ricordaconvove.ACTION_SNOOZE" />
+            </intent-filter>
+        </receiver>
 
         <!-- Boot receiver to reschedule on power up -->
         <receiver

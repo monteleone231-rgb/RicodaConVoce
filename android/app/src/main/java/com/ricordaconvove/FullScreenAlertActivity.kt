@@ -28,6 +28,12 @@ class FullScreenAlertActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Se l'utente è al telefono, non interferire con la schermata della chiamata
+        if (NotificationHelper.isInPhoneCallOrRinging(this)) {
+            finish()
+            return
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -62,7 +68,7 @@ class FullScreenAlertActivity : ComponentActivity() {
                 onTaken = {
                     stopAlertService()
                     NotificationHelper.cancelNotification(this, id)
-                    markSlotTaken(medName, timeSlot)
+                    NotificationHelper.markSlotTaken(this, medName, timeSlot)
                     openMainActivity()
                     finish()
                 },
@@ -75,23 +81,12 @@ class FullScreenAlertActivity : ComponentActivity() {
         }
     }
 
-    private fun markSlotTaken(medName: String, timeSlot: String) {
-        try {
-            val todayDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
-            val prefs = getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
-            val currentJsonStr = prefs.getString("taken_slots_json", "[]") ?: "[]"
-            val array = org.json.JSONArray(currentJsonStr)
-            val key = "${medName}_${timeSlot}_$todayDate"
-            var exists = false
-            for (i in 0 until array.length()) {
-                if (array.getString(i) == key) { exists = true; break }
-            }
-            if (!exists) {
-                array.put(key)
-                prefs.edit().putString("taken_slots_json", array.toString()).apply()
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("FullScreenAlert", "Error marking slot taken natively", e)
+    override fun onResume() {
+        super.onResume()
+        if (NotificationHelper.isInPhoneCallOrRinging(this)) {
+            android.util.Log.d("FullScreenAlert", "Chiamata attiva rilevata in onResume: chiudo la schermata full-screen")
+            stopAlertService()
+            finish()
         }
     }
 

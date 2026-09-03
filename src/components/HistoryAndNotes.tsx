@@ -29,7 +29,7 @@ export default function HistoryAndNotes({ lang, medications, notes, onAddNote, o
   // Wellbeing and Share State
   const [wellBeingLogs, setWellBeingLogs] = useState<{[key: string]: number}>(() => {
     try {
-      const stored = localStorage.getItem('ricordaconvoce_wellbeing_logs');
+      const stored = localStorage.getItem('ricordaconvoce_wellbeing_logs') ?? localStorage.getItem('medivoce_wellbeing_logs');
       return stored ? JSON.parse(stored) : {};
     } catch {
       return {};

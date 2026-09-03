@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { TRANSLATIONS, LanguageCode } from '../types';
 import { speakAnnouncement } from '../utils';
 import { Globe, ArrowRight, Volume2, ShieldCheck, Music, Mic, Settings, Battery, Eye, Bell, Check } from 'lucide-react';
-import bellIcon from '../assets/images/app_icon_bell_final_1787580544023.jpg';
+import bellIcon from '../assets/images/app_icon_turquoise_1788352552455.jpg';
 
 interface OnboardingProps {
   onComplete: (lang: LanguageCode) => void;

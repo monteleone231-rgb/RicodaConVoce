@@ -41,7 +41,7 @@ export const VoiceStudio: React.FC<VoiceStudioProps> = ({
   // Saved voices storage state
   const [savedVoices, setSavedVoices] = useState<SavedVoiceItem[]>(() => {
     try {
-      const stored = localStorage.getItem('ricordaconvoce_saved_voices');
+      const stored = localStorage.getItem('ricordaconvoce_saved_voices') ?? localStorage.getItem('medivoce_saved_voices');
       if (stored) {
         return JSON.parse(stored);
       }

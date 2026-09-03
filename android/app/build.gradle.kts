@@ -11,8 +11,8 @@ android {
         applicationId = "com.ricordaconvove"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.0.7"
+        versionCode = 19
+        versionName = "1.0.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

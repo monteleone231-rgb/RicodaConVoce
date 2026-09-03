@@ -151,12 +151,17 @@ export const THEME_MAP = {
 };
 
 export default function App() {
+  // Helper to read localStorage with backward-compatibility fallback
+  const getStorage = (key: string, fallbackKey: string) => {
+    return localStorage.getItem(key) ?? localStorage.getItem(fallbackKey);
+  };
+
   // 1. Core Onboarding state
   const [onboarded, setOnboarded] = useState<boolean>(() => {
-    return localStorage.getItem('ricordaconvoce_onboarded') === 'true';
+    return getStorage('ricordaconvoce_onboarded', 'medivoce_onboarded') === 'true';
   });
   const [lang, setLang] = useState<LanguageCode>(() => {
-    return (localStorage.getItem('ricordaconvoce_lang') as LanguageCode) || 'it';
+    return (getStorage('ricordaconvoce_lang', 'medivoce_lang') as LanguageCode) || 'it';
   });
 
   const t = TRANSLATIONS[lang];
@@ -223,7 +228,7 @@ export default function App() {
       }
     ];
 
-    const saved = localStorage.getItem('ricordaconvoce_meds');
+    const saved = getStorage('ricordaconvoce_meds', 'medivoce_meds');
     if (saved) {
       try {
         const parsed: Medication[] = JSON.parse(saved);
@@ -272,7 +277,7 @@ export default function App() {
       }
     ];
 
-    const saved = localStorage.getItem('ricordaconvoce_notes');
+    const saved = getStorage('ricordaconvoce_notes', 'medivoce_notes');
     if (saved) {
       try {
         const parsed: DoctorNote[] = JSON.parse(saved);
@@ -296,7 +301,7 @@ export default function App() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   
   // Emergency Phone state
-  const [emergencyPhone, setEmergencyPhone] = useState<string>(localStorage.getItem('ricordaconvoce_emergency_number') || '');
+  const [emergencyPhone, setEmergencyPhone] = useState<string>(getStorage('ricordaconvoce_emergency_number', 'medivoce_emergency_number') || '');
 
   // Form State for Adding/Editing
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -326,16 +331,16 @@ export default function App() {
 
   // Settings State variables
   const [speechSpeed, setSpeechSpeed] = useState<number>(() => {
-    const saved = localStorage.getItem('ricordaconvoce_speech_speed');
+    const saved = getStorage('ricordaconvoce_speech_speed', 'medivoce_speech_speed');
     return saved ? parseFloat(saved) : 0.75;
   });
   const [speechTone, setSpeechTone] = useState<'empathetic' | 'firm'>(() => {
-    return (localStorage.getItem('ricordaconvoce_speech_tone') as 'empathetic' | 'firm') || 'empathetic';
+    return (getStorage('ricordaconvoce_speech_tone', 'medivoce_speech_tone') as 'empathetic' | 'firm') || 'empathetic';
   });
   const [mobileSoundLevel, setMobileSoundLevel] = useState<'none' | 'beep' | 'continuous'>('continuous');
 
   const [vibrationEnabled, setVibrationEnabled] = useState<boolean>(() => {
-    return localStorage.getItem('ricordaconvoce_vibration') !== 'false'; // true by default
+    return getStorage('ricordaconvoce_vibration', 'medivoce_vibration') !== 'false'; // true by default
   });
 
   const lastCheckedMinuteRef = useRef<string>('');
@@ -353,26 +358,26 @@ export default function App() {
   };
 
   const [voiceAnnounceEnabled, setVoiceAnnounceEnabled] = useState<boolean>(() => {
-    return localStorage.getItem('ricordaconvoce_voice_announce') !== 'false'; // true by default
+    return getStorage('ricordaconvoce_voice_announce', 'medivoce_voice_announce') !== 'false'; // true by default
   });
   
   const [appTheme, setAppTheme] = useState<'light' | 'dark' | 'warm'>(() => {
-    return (localStorage.getItem('ricordaconvoce_theme') as 'light' | 'dark' | 'warm') || 'light';
+    return (getStorage('ricordaconvoce_theme', 'medivoce_theme') as 'light' | 'dark' | 'warm') || 'light';
   });
 
   const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
-    return (localStorage.getItem('ricordaconvoce_color_theme') as ColorTheme) || 'blue';
+    return (getStorage('ricordaconvoce_color_theme', 'medivoce_color_theme') as ColorTheme) || 'blue';
   });
 
   const [alwaysOnDisplay, setAlwaysOnDisplay] = useState<boolean>(() => {
-    return localStorage.getItem('ricordaconvoce_alwayson') === 'true'; // false by default
+    return getStorage('ricordaconvoce_alwayson', 'medivoce_alwayson') === 'true'; // false by default
   });
 
   const [langDropdownOpen, setLangDropdownOpen] = useState<boolean>(false);
 
   // Custom imported sounds
   const [importedSounds, setImportedSounds] = useState<{ id: string; name: string; dataUrl: string }[]>(() => {
-    const saved = localStorage.getItem('ricordaconvoce_custom_sounds');
+    const saved = getStorage('ricordaconvoce_custom_sounds', 'medivoce_custom_sounds');
     return saved ? JSON.parse(saved) : [];
   });
   const [showImportSoundsModal, setShowImportSoundsModal] = useState<boolean>(false);

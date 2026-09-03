@@ -37,22 +37,14 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
     private var tts: TextToSpeech? = null
     private var isTtsInitialized = false
 
-    // Flag per tenere attiva la SplashScreen nativa finché la WebView non ha caricato l'interfaccia
-    private var isPageReady = false
-
     @Volatile
     var cachedSoundsJson: String = "[]"
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // 1. Inizializza la Splash Screen API PRIMA di super.onCreate()
-        val splashScreen = installSplashScreen()
+        // Initialize Splash Screen API
+        installSplashScreen()
 
         super.onCreate(savedInstanceState)
-
-        // 2. Blocca la Splash Screen finché la pagina web non è completamente pronta
-        splashScreen.setKeepOnScreenCondition {
-            !isPageReady
-        }
 
         scheduler = AlarmScheduler(this)
         
@@ -87,9 +79,6 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
         }.start()
 
         bridge?.webView?.let { webView ->
-            // Imposta lo sfondo della WebView su azzurro per eliminare qualsiasi flash bianco transitorio
-            webView.setBackgroundColor(android.graphics.Color.parseColor("#00B4D8"))
-
             webView.settings.javaScriptEnabled = true
             webView.settings.mediaPlaybackRequiresUserGesture = false
             webView.settings.domStorageEnabled = true
@@ -97,17 +86,6 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
 
             webView.addJavascriptInterface(AndroidInterface(this, this, scheduler), "Android")
             Log.d(TAG_NATIVE, "Custom JavaScript Interface 'Android' successfully registered.")
-
-            // Intercetta onPageFinished per sbloccare la Splash Screen non appena la Web UI è renderizzata
-            val originalWebViewClient = webView.webViewClient
-            webView.webViewClient = object : WebViewClient() {
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    super.onPageFinished(view, url)
-                    originalWebViewClient?.onPageFinished(view, url)
-                    isPageReady = true
-                    Log.d(TAG_NATIVE, "WebView page finished loading. Dismissing native SplashScreen.")
-                }
-            }
 
             // Set custom WebChromeClient wrapper to safely grant web microphone permissions while delegating to Capacitor's original chrome client
             val originalChromeClient = webView.webChromeClient
@@ -144,14 +122,6 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
                 }
             }
         }
-
-        // Timeout di sicurezza per sbloccare la splash screen in ogni circostanza dopo max 3 secondi
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            if (!isPageReady) {
-                isPageReady = true
-                Log.d(TAG_NATIVE, "Safety timeout reached: force dismissing SplashScreen.")
-            }
-        }, 3000)
 
         // Request runtime microphone permission on startup if not already granted (Android M/6.0+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

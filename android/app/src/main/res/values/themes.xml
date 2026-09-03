@@ -3,7 +3,7 @@
     <!-- Tema Principale dell'Applicazione -->
     <style name="Theme.RicordaConVoce" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="android:windowBackground">@color/splashBackground</item>
+        <item name="android:windowBackground">@color/colorBackground</item>
     </style>
 
     <!-- Tema Splash Screen compatibile con Android 12+ e versioni precedenti -->

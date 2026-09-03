@@ -32,8 +32,21 @@ class ReminderAlertService : Service(), TextToSpeech.OnInitListener {
     private var timeSlot: String = ""
     private var customVoicePath: String = ""
     private var hasCustomVoice: Boolean = false
+    private var currentAlarmId: Int = -1
     private val loopHandler = Handler(Looper.getMainLooper())
     private var isServiceActive = true
+
+    private val callCheckRunnable = object : Runnable {
+        override fun run() {
+            if (!isServiceActive) return
+            if (NotificationHelper.isInPhoneCallOrRinging(this@ReminderAlertService)) {
+                Log.d(TAG, "Chiamata attiva iniziata durante l'avviso vocale! Interrompo riproduzione.")
+                handleCallInterruption()
+                return
+            }
+            loopHandler.postDelayed(this, 1500L)
+        }
+    }
 
     companion object {
         private const val TAG = "ReminderAlertService"
@@ -54,6 +67,14 @@ class ReminderAlertService : Service(), TextToSpeech.OnInitListener {
         timeSlot = intent?.getStringExtra("TIME_SLOT") ?: ""
         customVoicePath = intent?.getStringExtra("CUSTOM_VOICE_PATH") ?: ""
         val alarmId = intent?.getIntExtra("ALARM_ID", -1) ?: -1
+        currentAlarmId = alarmId
+
+        // Controllo immediato: se l'utente è al telefono, arresta subito il servizio audio e attiva notifica + auto-snooze
+        if (NotificationHelper.isInPhoneCallOrRinging(this)) {
+            Log.d(TAG, "Chiamata attiva rilevata in onStartCommand: arresto servizio e invio notifica discreta con auto-snooze.")
+            handleCallInterruption()
+            return START_NOT_STICKY
+        }
 
         // 1. Check if a personal recorded voice file exists on disk
         if (customVoicePath.isNotBlank()) {
@@ -129,7 +150,11 @@ class ReminderAlertService : Service(), TextToSpeech.OnInitListener {
 
         startForeground(NOTIFICATION_ID, notification)
 
-        // 4. Play audio: Personal Recorded Voice vs Synthetic Voice + Ringtone
+        // 4. Avvia il monitoraggio periodico delle chiamate per interrompere l'audio se l'utente risponde al telefono
+        loopHandler.removeCallbacks(callCheckRunnable)
+        loopHandler.post(callCheckRunnable)
+
+        // 5. Play audio: Personal Recorded Voice vs Synthetic Voice + Ringtone
         if (hasCustomVoice) {
             // PLAY PERSONAL RECORDED VOICE VIA MEDIAPLAYER
             playPersonalVoiceRecording(customVoicePath)
@@ -140,6 +165,32 @@ class ReminderAlertService : Service(), TextToSpeech.OnInitListener {
         }
 
         return START_STICKY
+    }
+
+    private fun handleCallInterruption() {
+        Log.d(TAG, "Esecuzione handleCallInterruption per $reminderName (ID: $currentAlarmId)")
+        stopAudioPlayback()
+        NotificationHelper.showCallQuietNotification(
+            context = this,
+            id = currentAlarmId,
+            medName = reminderName,
+            voicePrompt = voicePrompt,
+            dosage = dosage,
+            timeSlot = timeSlot,
+            customVoicePath = customVoicePath,
+            snoozeMinutes = AlarmReceiver.AUTO_SNOOZE_CALL_MINUTES
+        )
+        val autoSnoozeMillis = System.currentTimeMillis() + AlarmReceiver.AUTO_SNOOZE_CALL_MINUTES * 60 * 1000L
+        AlarmScheduler(this).scheduleExactAlarm(
+            timeMillis = autoSnoozeMillis,
+            id = currentAlarmId,
+            name = reminderName,
+            voicePrompt = voicePrompt,
+            dosage = dosage,
+            timeSlot = timeSlot,
+            customVoicePath = customVoicePath
+        )
+        stopSelf()
     }
 
     private fun playPersonalVoiceRecording(filePath: String) {
