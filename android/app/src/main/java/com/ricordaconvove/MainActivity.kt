@@ -26,6 +26,9 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.getcapacitor.BridgeActivity
 import org.json.JSONArray
 import org.json.JSONObject
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import java.io.File
 import java.io.FileOutputStream
@@ -183,12 +186,122 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
         }
     }
 
+    private var speechRecognizer: SpeechRecognizer? = null
+
+    fun startSpeechRecognition(lang: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 102)
+                sendSpeechErrorToWeb("Permesso microfono non concesso")
+                return
+            }
+        }
+
+        try {
+            stopSpeechRecognition()
+            if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+                sendSpeechErrorToWeb("Riconoscimento vocale non disponibile")
+                return
+            }
+
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this).apply {
+                setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) {}
+                    override fun onBeginningOfSpeech() {}
+                    override fun onRmsChanged(rmsdB: Float) {}
+                    override fun onBufferReceived(buffer: ByteArray?) {}
+                    override fun onEndOfSpeech() {}
+                    override fun onError(error: Int) {
+                        val msg = when (error) {
+                            SpeechRecognizer.ERROR_NO_MATCH -> "Nessuna parola riconosciuta"
+                            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Nessuna voce rilevata"
+                            SpeechRecognizer.ERROR_AUDIO -> "Errore registrazione audio"
+                            SpeechRecognizer.ERROR_CLIENT -> "Operazione annullata"
+                            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Permesso microfono mancante"
+                            SpeechRecognizer.ERROR_NETWORK -> "Errore di connessione"
+                            SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Timeout di rete"
+                            SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Microfono occupato"
+                            SpeechRecognizer.ERROR_SERVER -> "Errore server vocale"
+                            else -> "Errore microfono ($error)"
+                        }
+                        Log.w(TAG_NATIVE, "SpeechRecognizer error: $error ($msg)")
+                        sendSpeechErrorToWeb(msg)
+                    }
+                    override fun onResults(results: Bundle?) {
+                        val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        val text = matches?.firstOrNull() ?: ""
+                        Log.d(TAG_NATIVE, "SpeechRecognizer final result: $text")
+                        sendSpeechResultToWeb(text, true)
+                    }
+                    override fun onPartialResults(partialResults: Bundle?) {
+                        val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        val text = matches?.firstOrNull() ?: ""
+                        if (text.isNotBlank()) {
+                            sendSpeechResultToWeb(text, false)
+                        }
+                    }
+                    override fun onEvent(eventType: Int, params: Bundle?) {}
+                })
+            }
+
+            val intent = android.content.Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                val localeStr = when {
+                    lang.startsWith("it") -> "it-IT"
+                    lang.startsWith("en") -> "en-US"
+                    lang.startsWith("es") -> "es-ES"
+                    lang.startsWith("fr") -> "fr-FR"
+                    lang.startsWith("de") -> "de-DE"
+                    else -> Locale.getDefault().toLanguageTag()
+                }
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, localeStr)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, localeStr)
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+            }
+            speechRecognizer?.startListening(intent)
+            Log.d(TAG_NATIVE, "Started SpeechRecognizer for lang $lang")
+        } catch (e: Exception) {
+            Log.e(TAG_NATIVE, "Error starting SpeechRecognizer", e)
+            sendSpeechErrorToWeb("Errore avvio microfono")
+        }
+    }
+
+    fun stopSpeechRecognition() {
+        try {
+            speechRecognizer?.stopListening()
+            speechRecognizer?.cancel()
+            speechRecognizer?.destroy()
+        } catch (e: Exception) {
+            Log.w(TAG_NATIVE, "Error stopping SpeechRecognizer", e)
+        } finally {
+            speechRecognizer = null
+        }
+    }
+
+    private fun sendSpeechResultToWeb(text: String, isFinal: Boolean) {
+        runOnUiThread {
+            val safeText = JSONObject.quote(text)
+            val js = "if (window.onNativeSpeechResult) { window.onNativeSpeechResult($safeText, $isFinal); }"
+            bridge?.webView?.evaluateJavascript(js, null)
+        }
+    }
+
+    private fun sendSpeechErrorToWeb(errorMsg: String) {
+        runOnUiThread {
+            val safeMsg = JSONObject.quote(errorMsg)
+            val js = "if (window.onNativeSpeechError) { window.onNativeSpeechError($safeMsg); }"
+            bridge?.webView?.evaluateJavascript(js, null)
+        }
+    }
+
     override fun onDestroy() {
         try {
+            stopSpeechRecognition()
             tts?.stop()
             tts?.shutdown()
         } catch (e: Exception) {
-            Log.e(TAG_NATIVE, "Error on destroying TextToSpeech", e)
+            Log.e(TAG_NATIVE, "Error on destroying resources", e)
         }
         super.onDestroy()
     }
@@ -737,6 +850,25 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
             activity.runOnUiThread {
                 (activity as? MainActivity)?.stopSpeaking()
             }
+        }
+
+        @JavascriptInterface
+        fun startSpeechRecognition(lang: String) {
+            activity.runOnUiThread {
+                (activity as? MainActivity)?.startSpeechRecognition(lang)
+            }
+        }
+
+        @JavascriptInterface
+        fun stopSpeechRecognition() {
+            activity.runOnUiThread {
+                (activity as? MainActivity)?.stopSpeechRecognition()
+            }
+        }
+
+        @JavascriptInterface
+        fun isSpeechRecognitionAvailable(): Boolean {
+            return SpeechRecognizer.isRecognitionAvailable(context)
         }
     }
 }

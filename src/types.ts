@@ -65,6 +65,11 @@ export const TRANSLATIONS: Record<LanguageCode, {
   greetingEvening: string;
   greetingNight: string;
   addMedication: string;
+  speakButton: string;
+  speakButtonTooltip: string;
+  voiceDictateTrigger: string;
+  vocalRemindersArmed: string;
+  snoozeSilently: string;
   editMedication: string;
   medicationName: string;
   medicationNamePlaceholder: string;
@@ -270,7 +275,12 @@ export const TRANSLATIONS: Record<LanguageCode, {
     greetingAfternoon: "Buon pomeriggio",
     greetingEvening: "Buonasera",
     greetingNight: "Buonanotte",
-    addMedication: "Aggiungi Promemoria",
+    addMedication: "Promemoria",
+    speakButton: "Parla",
+    speakButtonTooltip: "Crea promemoria parlando con la voce",
+    voiceDictateTrigger: "Compila parlando con la voce (Automatico)",
+    vocalRemindersArmed: "Promemoria vocali attivi",
+    snoozeSilently: "Rimanda silenziosamente",
     editMedication: "Modifica Promemoria",
     medicationName: "Nome del Promemoria",
     medicationNamePlaceholder: "es: Bere un bicchiere d'acqua",
@@ -476,7 +486,12 @@ export const TRANSLATIONS: Record<LanguageCode, {
     greetingAfternoon: "Good afternoon",
     greetingEvening: "Good evening",
     greetingNight: "Good night",
-    addMedication: "Add Reminder",
+    addMedication: "Reminder",
+    speakButton: "Speak",
+    speakButtonTooltip: "Create reminder with voice",
+    voiceDictateTrigger: "Fill in by speaking (Automatic)",
+    vocalRemindersArmed: "Vocal reminders armed",
+    snoozeSilently: "Snooze silently",
     editMedication: "Edit Reminder",
     medicationName: "Reminder Name",
     medicationNamePlaceholder: "e.g., Drink a glass of water",
@@ -682,7 +697,12 @@ export const TRANSLATIONS: Record<LanguageCode, {
     greetingAfternoon: "Buenas tardes",
     greetingEvening: "Buenas noches",
     greetingNight: "Buenas noches",
-    addMedication: "Añadir Recordatorio",
+    addMedication: "Recordatorio",
+    speakButton: "Hablar",
+    speakButtonTooltip: "Crear recordatorio con la voz",
+    voiceDictateTrigger: "Rellenar hablando con la voz (Automático)",
+    vocalRemindersArmed: "Recordatorios de voz activos",
+    snoozeSilently: "Posponer en silencio",
     editMedication: "Editar Recordatorio",
     medicationName: "Nombre del Recordatorio",
     medicationNamePlaceholder: "ej: Beber un vaso de agua",
@@ -888,7 +908,12 @@ export const TRANSLATIONS: Record<LanguageCode, {
     greetingAfternoon: "Bon après-midi",
     greetingEvening: "Bonsoir",
     greetingNight: "Bonne nuit",
-    addMedication: "Ajouter un Rappel",
+    addMedication: "Rappel",
+    speakButton: "Parler",
+    speakButtonTooltip: "Créer un rappel à la voix",
+    voiceDictateTrigger: "Remplir en parlant à la voix (Automatique)",
+    vocalRemindersArmed: "Rappels vocaux armés",
+    snoozeSilently: "Reporter en silence",
     editMedication: "Modifier le Rappel",
     medicationName: "Nom du Rappel",
     medicationNamePlaceholder: "ex : Boire un verre d'eau",
@@ -1094,7 +1119,12 @@ export const TRANSLATIONS: Record<LanguageCode, {
     greetingAfternoon: "Guten Nachmittag",
     greetingEvening: "Guten Abend",
     greetingNight: "Gute Nacht",
-    addMedication: "Erinnerung hinzufügen",
+    addMedication: "Erinnerung",
+    speakButton: "Sprechen",
+    speakButtonTooltip: "Erinnerung mit der Stimme erstellen",
+    voiceDictateTrigger: "Per Spracheingabe ausfüllen (Automatisch)",
+    vocalRemindersArmed: "Spracherinnerungen aktiv",
+    snoozeSilently: "Lautlos verschieben",
     editMedication: "Erinnerung bearbeiten",
     medicationName: "Name der Erinnerung",
     medicationNamePlaceholder: "z.B.: Ein Glas Wasser trinken",

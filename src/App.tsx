@@ -19,6 +19,8 @@ import Onboarding from './components/Onboarding';
 import { VoiceStudio } from './components/VoiceStudio';
 import HistoryAndNotes from './components/HistoryAndNotes';
 import { VoiceRecorderField } from './components/VoiceRecorderField';
+import { VoiceDictateModal } from './components/VoiceDictateModal';
+import { ParsedSpokenReminder } from './speechParser';
 
 export type ColorTheme = 'blue' | 'orange' | 'teal' | 'purple' | 'rose';
 
@@ -328,6 +330,9 @@ export default function App() {
 
   // Barcode camera view trigger
   const [showScanner, setShowScanner] = useState<boolean>(false);
+
+  // Voice-to-Reminder (Option A) modal trigger
+  const [showVoiceDictateModal, setShowVoiceDictateModal] = useState<boolean>(false);
 
   // Settings State variables
   const [speechSpeed, setSpeechSpeed] = useState<number>(() => {
@@ -916,6 +921,47 @@ export default function App() {
     setFormStockCurrent(30);
     setFormStockMin(5);
     setFormPillColor('blue');
+  };
+
+  // Option A: Voice-to-Reminder flow handlers
+  const handleVoiceSaveDirect = (parsed: ParsedSpokenReminder) => {
+    const primaryTime = parsed.time || '08:00';
+    const times = parsed.times && parsed.times.length > 0 ? parsed.times : [primaryTime];
+    const newM: Medication = {
+      id: Date.now().toString(),
+      name: parsed.name,
+      dosage: parsed.dosage || '',
+      time: primaryTime,
+      times: times,
+      notes: parsed.notes || '',
+      category: parsed.category,
+      weeklySchedule: [1, 2, 3, 4, 5, 6, 0],
+      frequencyType: 'weekly',
+      isActive: true,
+      history: {},
+      audioTone: 'preset_arpeggio',
+      voicePrompt: `${t.speakAlert}: ${parsed.name}. ${parsed.dosage || ''}. ${parsed.notes || ''}`.trim(),
+      nativeId: Math.floor(Math.random() * 10000000),
+      pillColor: 'blue'
+    };
+    setMedications(prev => [newM, ...prev]);
+    playAlarmTone('preset_trillo');
+  };
+
+  const handleVoiceOpenInFullForm = (parsed: ParsedSpokenReminder) => {
+    setIsEditingId(null);
+    setFormName(parsed.name);
+    setFormDosage(parsed.dosage || '');
+    const primaryTime = parsed.time || '08:00';
+    setFormTime(primaryTime);
+    setFormTimes(parsed.times && parsed.times.length > 0 ? parsed.times : [primaryTime]);
+    setFormNotes(parsed.notes || '');
+    setFormCategory(parsed.category);
+    setFormSchedule([1, 2, 3, 4, 5, 6, 0]);
+    setFormFrequencyType('weekly');
+    setFormVoicePrompt(`${t.speakAlert}: ${parsed.name}. ${parsed.dosage || ''}. ${parsed.notes || ''}`.trim());
+    setFormAudioTone('preset_arpeggio');
+    setShowAddModal(true);
   };
 
   const startEditMedication = (med: Medication) => {
@@ -1602,7 +1648,7 @@ export default function App() {
                   }}
                   className="text-xs text-gray-400 hover:text-white font-bold transition-colors pt-2 block mx-auto underline"
                 >
-                  {lang === 'it' ? "Rimanda silenziosamente" : "Snooze silently"}
+                  {t.snoozeSilently}
                 </button>
               </div>
             </motion.div>
@@ -1626,11 +1672,11 @@ export default function App() {
                  <div className={`flex justify-between items-center bg-gradient-to-br ${theme.gradientFrom} ${theme.gradientTo} text-white px-4 py-5 rounded-[28px] ${theme.shadow}`}>
                    <div className="space-y-1 text-left">
                      <span className="text-3xs font-black uppercase tracking-widest text-white/80">
-                       {currentTime.toLocaleDateString(lang === 'it' ? 'it-IT' : 'en-US', { weekday: 'long', day: 'numeric', month: 'short' })}
+                       {currentTime.toLocaleDateString(lang === 'it' ? 'it-IT' : lang === 'es' ? 'es-ES' : lang === 'fr' ? 'fr-FR' : lang === 'de' ? 'de-DE' : 'en-US', { weekday: 'long', day: 'numeric', month: 'short' })}
                      </span>
                      <h2 className="text-xl font-bold tracking-tight">{getContextualGreeting()}!</h2>
                      <span className="text-xs font-semibold text-white/90 block leading-tight">
-                       {lang === 'it' ? "Promemoria vocali attivi" : "Vocal reminders armed"}
+                       {t.vocalRemindersArmed}
                      </span>
                    </div>
                    
@@ -1669,32 +1715,45 @@ export default function App() {
                  </div>
  
                  {/* Agenda main title bar */}
-                 <div className="flex justify-between items-center">
-                   <div className="text-left">
-                     <h3 className="text-lg font-extrabold text-[#1E3A8A] tracking-tight">{t.todayMedsTitle}</h3>
+                 <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-2">
+                   <div className="text-left min-w-0">
+                     <h3 className="text-lg font-extrabold text-[#1E3A8A] tracking-tight truncate">{t.todayMedsTitle}</h3>
                      <div className="text-3xs text-[#64748B] font-bold uppercase tracking-wider">{t.todayMedsSubtitle}</div>
                    </div>
                    
-                   <button
-                     id="app-add-med-btn"
-                     onClick={() => {
-                       setIsEditingId(null);
-                       setFormName('');
-                       setFormDosage('');
-                       setFormTime('08:00');
-                       setFormTimes(['08:00']);
-                       setFormNotes('');
-                       setFormCategory('pill');
-                       setFormSchedule([1, 2, 3, 4, 5, 6, 0]);
-                       setFormVoicePrompt('');
-                       setFormAudioTone('preset_arpeggio');
-                       setShowAddModal(true);
-                     }}
-                     className={`py-2 px-3 rounded-xl ${theme.primary} ${theme.primaryHover} text-white font-extrabold text-xs flex items-center gap-1 ${theme.shadow} transition-all`}
-                   >
-                     <Plus className="w-3.5 h-3.5" />
-                     <span>{t.addMedication}</span>
-                   </button>
+                   <div className="flex items-center gap-2 shrink-0">
+                     <button
+                       id="agenda-voice-create-btn"
+                       type="button"
+                       onClick={() => setShowVoiceDictateModal(true)}
+                       className="py-2 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-purple-200 transition-all cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
+                       title={t.speakButtonTooltip}
+                     >
+                       <Mic className="w-3.5 h-3.5 text-purple-200 animate-pulse" />
+                       <span>{t.speakButton}</span>
+                     </button>
+
+                     <button
+                       id="app-add-med-btn"
+                       onClick={() => {
+                         setIsEditingId(null);
+                         setFormName('');
+                         setFormDosage('');
+                         setFormTime('08:00');
+                         setFormTimes(['08:00']);
+                         setFormNotes('');
+                         setFormCategory('pill');
+                         setFormSchedule([1, 2, 3, 4, 5, 6, 0]);
+                         setFormVoicePrompt('');
+                         setFormAudioTone('preset_arpeggio');
+                         setShowAddModal(true);
+                       }}
+                       className={`py-2 px-2.5 sm:px-3 rounded-xl ${theme.primary} ${theme.primaryHover} text-white font-extrabold text-xs flex items-center gap-1 ${theme.shadow} transition-all shrink-0 cursor-pointer whitespace-nowrap`}
+                     >
+                       <Plus className="w-3.5 h-3.5" />
+                       <span>{t.addMedication}</span>
+                     </button>
+                   </div>
                  </div>
 
                  {/* Medications listings */}
@@ -1925,7 +1984,18 @@ export default function App() {
                       {t.medicationManagementSub}
                     </p>
                   </div>
-                  <div className="flex justify-end items-center pt-0.5">
+                  <div className="flex justify-end items-center gap-2 pt-0.5">
+                    <button
+                      id="med-tab-voice-create-btn"
+                      type="button"
+                      onClick={() => setShowVoiceDictateModal(true)}
+                      className="py-2 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95 shrink-0"
+                      title={t.speakButtonTooltip}
+                    >
+                      <Mic className="w-3.5 h-3.5 text-purple-200" />
+                      <span>{t.speakButton}</span>
+                    </button>
+
                     <button
                       id="med-tab-add-btn"
                       onClick={() => {
@@ -2605,6 +2675,22 @@ export default function App() {
                   </button>
                 </div>
 
+                {/* Voice-to-Reminder quick assist button */}
+                {!isEditingId && (
+                  <button
+                    type="button"
+                    id="modal-voice-dictate-trigger-btn"
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setShowVoiceDictateModal(true);
+                    }}
+                    className="w-full py-2.5 px-3 bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 hover:from-purple-100 hover:to-indigo-100 border border-purple-200 hover:border-purple-300 rounded-2xl flex items-center justify-center gap-2 text-xs font-black text-purple-900 transition-all cursor-pointer shadow-xs active:scale-98"
+                  >
+                    <Mic className="w-4 h-4 text-purple-600 animate-pulse" />
+                    <span>{t.voiceDictateTrigger}</span>
+                  </button>
+                )}
+
                 {/* Main Form Fields */}
                 <form onSubmit={handleSaveMedication} className="space-y-4 text-sm text-left">
                   
@@ -3243,6 +3329,16 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        {/* VOICE-TO-REMINDER DICTATION MODAL (OPTION A) */}
+        <VoiceDictateModal
+          isOpen={showVoiceDictateModal}
+          onClose={() => setShowVoiceDictateModal(false)}
+          lang={lang}
+          onSaveDirect={handleVoiceSaveDirect}
+          onOpenInFullForm={handleVoiceOpenInFullForm}
+          speechSpeed={speechSpeed}
+          speechTone={speechTone}
+        />
 
       </div>
 
