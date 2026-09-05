@@ -306,7 +306,7 @@ export const TRANSLATIONS: Record<LanguageCode, {
     voiceMessageLabel: "Messaggio vocale personalizzato (opzionale)",
     voiceMessagePlaceholder: "Es: Ricordati di fare una passeggiata e bere un po' d'acqua.",
     voiceOptionLabel: "Tipo di Avviso Vocale",
-    voiceOptionTts: "Voce Sintetica (Automatica)",
+    voiceOptionTts: "Voce Automatica",
     voiceOptionCustom: "La Mia Voce Registrata 🎙️",
     voiceRecordingTitle: "Registra la Tua Voce",
     voiceRecordingSub: "Registra con la tua voce il messaggio per questo promemoria.",

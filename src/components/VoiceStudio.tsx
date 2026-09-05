@@ -653,7 +653,7 @@ export const VoiceStudio: React.FC<VoiceStudioProps> = ({
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <Layers className="w-5 h-5 text-blue-600 shrink-0" />
-            <h3 className="text-base font-black text-slate-800 truncate">
+            <h3 className="text-base font-black text-slate-800 leading-tight">
               {t.voiceStudioRemindersStatusTitle}
             </h3>
           </div>
@@ -681,30 +681,34 @@ export const VoiceStudio: React.FC<VoiceStudioProps> = ({
                       : 'bg-slate-50 border-slate-200'
                   }`}
                 >
-                  <div className="flex flex-wrap sm:flex-nowrap items-start justify-between gap-2">
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-black text-slate-800 break-words">{med.name}</span>
-                        <span className="text-xs font-bold text-slate-500 bg-white px-2 py-0.5 rounded-lg border border-slate-200 shrink-0">
-                          ⏰ {med.time}
-                        </span>
-                      </div>
+                  {/* Top Bar: Badge in alto a sinistra + Orario sveglia in alto a destra */}
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    {hasCustomVoice ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>{t.recordedVoiceBadge}</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-slate-200/80 text-slate-700 shrink-0">
+                        <Volume2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                        <span>{t.voiceOptionTts}</span>
+                      </span>
+                    )}
+
+                    <span className="text-xs font-bold text-slate-600 bg-white px-2 py-0.5 rounded-lg border border-slate-200 shrink-0 shadow-2xs">
+                      ⏰ {med.time}
+                    </span>
+                  </div>
+
+                  {/* Testo Promemoria a piena larghezza: nessun restringimento verticale */}
+                  <div className="space-y-1 text-left">
+                    <h4 className="text-sm font-black text-slate-800 break-words leading-snug">
+                      {med.name}
+                    </h4>
+                    {(med.dosage || med.notes) && (
                       <p className="text-xs text-slate-500 font-medium break-words">
                         {med.dosage || med.notes}
                       </p>
-                    </div>
-
-                    {/* Badge */}
-                    {hasCustomVoice ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0 max-w-full">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span className="truncate">{t.recordedVoiceBadge}</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-200/80 text-slate-600 shrink-0 max-w-full">
-                        <Volume2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                        <span className="truncate">{t.voiceOptionTts}</span>
-                      </span>
                     )}
                   </div>
 
