@@ -1445,41 +1445,42 @@ export default function App() {
           </div>
         </div>
 
-        {/* Times list badges */}
-        <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t.timesLabel}</span>
-          {medTimes.map((tVal, tid) => (
-            <span key={tid} className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg border border-slate-200">
-              <Clock className="w-2.5 h-2.5 text-slate-400" />
-              <span>{tVal}</span>
-            </span>
-          ))}
-        </div>
+        {/* Times list badges & Schedule frequency in horizontal layout */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-1.5 items-center">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t.timesLabel}</span>
+            {medTimes.map((tVal, tid) => (
+              <span key={tid} className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg border border-slate-200">
+                <Clock className="w-2.5 h-2.5 text-slate-400" />
+                <span>{tVal}</span>
+              </span>
+            ))}
+          </div>
 
-        {/* Action buttons (Edit/Delete) */}
-        <div className="flex justify-between items-center pt-2.5 border-t border-slate-100 text-xs">
-          <div className="text-[11px] text-[#E58045] font-extrabold flex items-center gap-1">
+          <div className="text-[11px] text-[#E58045] font-extrabold inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 border border-amber-200/80 rounded-lg shrink-0">
             <span>🔄</span>
             <span>{formatMedicationSchedule(med, lang)}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              id={`edit-med-manage-${med.id}`}
-              onClick={() => startEditMedication(med)}
-              className="py-1.5 px-3 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#1E293B] font-extrabold rounded-xl transition-all flex items-center gap-1"
-            >
-              <span>✏️</span>
-              <span>{t.editBtn}</span>
-            </button>
-            <button
-              id={`delete-med-manage-${med.id}`}
-              onClick={() => setMedToDeleteId(med.id)}
-              className="py-1.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-extrabold rounded-xl transition-all flex items-center gap-1"
-            >
-              <span>🗑️</span>
-              <span>{t.deleteBtn}</span>
-            </button>
-          </div>
+        </div>
+
+        {/* Action buttons (Edit on left, Delete on right) */}
+        <div className="flex justify-between items-center gap-2 pt-2.5 border-t border-slate-100 text-xs">
+          <button
+            id={`edit-med-manage-${med.id}`}
+            onClick={() => startEditMedication(med)}
+            className="py-1.5 px-3 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#1E293B] font-extrabold rounded-xl transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+          >
+            <span>✏️</span>
+            <span>{t.editBtn}</span>
+          </button>
+          <button
+            id={`delete-med-manage-${med.id}`}
+            onClick={() => setMedToDeleteId(med.id)}
+            className="py-1.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-extrabold rounded-xl transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+          >
+            <span>🗑️</span>
+            <span>{t.deleteBtn}</span>
+          </button>
         </div>
       </div>
     );

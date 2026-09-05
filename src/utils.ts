@@ -779,11 +779,19 @@ export function formatMedicationSchedule(
   });
 
   const dayNames = sortedSchedule.map(d => daysList[d]);
-  if (isIt) return `Nei giorni: ${dayNames.join(', ')}`;
-  if (isEs) return `En los días: ${dayNames.join(', ')}`;
-  if (isFr) return `Les jours : ${dayNames.join(', ')}`;
-  if (isDe) return `An den Tagen: ${dayNames.join(', ')}`;
-  return `On days: ${dayNames.join(', ')}`;
+  if (dayNames.length === 1) {
+    if (isIt) return `Ogni ${dayNames[0]}`;
+    if (isEs) return `Cada ${dayNames[0]}`;
+    if (isFr) return `Chaque ${dayNames[0]}`;
+    if (isDe) return `Jeden ${dayNames[0]}`;
+    return `Every ${dayNames[0]}`;
+  }
+
+  if (isIt) return `Giorni: ${dayNames.join(', ')}`;
+  if (isEs) return `Días: ${dayNames.join(', ')}`;
+  if (isFr) return `Jours : ${dayNames.join(', ')}`;
+  if (isDe) return `Tage: ${dayNames.join(', ')}`;
+  return `Days: ${dayNames.join(', ')}`;
 }
 
 export function getNextOccurrence(
