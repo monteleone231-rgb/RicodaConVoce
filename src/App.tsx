@@ -1783,51 +1783,26 @@ export default function App() {
                                  }`
                            }`}
                          >
-                           <div className="flex justify-between items-start gap-3">
-                             {/* Medicine icon & title block */}
-                             <div className="flex items-start gap-3 flex-1 min-w-0">
-                               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold shrink-0 ${
-                                 isTaken 
-                                   ? 'bg-emerald-100 text-emerald-800' 
-                                   : med.pillColor === 'red' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
-                                     med.pillColor === 'green' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                                     med.pillColor === 'orange' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
-                                     med.pillColor === 'purple' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
-                                     'bg-blue-50 text-blue-600 border border-blue-100'
-                               }`}>
-                                 {med.category === 'pill' ? '📝' : med.category === 'capsule' ? '🔔' : med.category === 'liquid' ? '⏰' : med.category === 'bottle' ? '📅' : med.category === 'inhaler' ? '🗣️' : med.category === 'cream' ? '📋' : med.category === 'injection' ? '💡' : '📌'}
-                               </div>
-                               <div className="min-w-0 flex-1">
-                                 <h4 className="font-extrabold text-base text-[#1E293B] leading-snug tracking-tight break-words flex items-center gap-1.5 flex-wrap">
-                                   <span>{med.name}</span>
-                                   {med.customVoiceUri && (
-                                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200">
-                                       🎙️ {t.recordedVoiceBadge}
-                                     </span>
-                                   )}
-                                 </h4>
-                                 <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
-                                   <Clock className="w-3.5 h-3.5 text-gray-400" />
-                                   <span className={`font-bold ${
-                                     isTaken 
-                                       ? 'text-emerald-600' 
-                                       : med.pillColor === 'red' ? 'text-rose-600' :
-                                         med.pillColor === 'green' ? 'text-emerald-600' :
-                                         med.pillColor === 'orange' ? 'text-amber-600' :
-                                         med.pillColor === 'purple' ? 'text-purple-600' :
-                                         'text-blue-600'
-                                   }`}>{timeSlot}</span>
-                                   <span>&bull;</span>
-                                   <span className="font-semibold text-gray-500">{med.dosage}</span>
-                                 </div>
-                               </div>
+                           {/* Top Bar: Icon on the left, Edit & Delete actions on the right */}
+                           <div className="flex items-center justify-between gap-3">
+                             <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-xl font-bold shrink-0 ${
+                               isTaken 
+                                 ? 'bg-emerald-100 text-emerald-800' 
+                                 : med.pillColor === 'red' ? 'bg-rose-50 text-rose-600 border border-rose-100' :
+                                   med.pillColor === 'green' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                                   med.pillColor === 'orange' ? 'bg-amber-50 text-amber-600 border border-amber-100' :
+                                   med.pillColor === 'purple' ? 'bg-purple-50 text-purple-600 border border-purple-100' :
+                                   'bg-blue-50 text-blue-600 border border-blue-100'
+                             }`}>
+                               {med.category === 'pill' ? '📝' : med.category === 'capsule' ? '🔔' : med.category === 'liquid' ? '⏰' : med.category === 'bottle' ? '📅' : med.category === 'inhaler' ? '🗣️' : med.category === 'cream' ? '📋' : med.category === 'injection' ? '💡' : '📌'}
                              </div>
+
                              {/* Options popup edit/del */}
-                             <div className="flex gap-2 shrink-0 items-center">
+                             <div className="flex gap-1.5 shrink-0 items-center">
                                <button
                                  id={`edit-med-btn-${med.id}`}
                                  onClick={() => startEditMedication(med)}
-                                 className="p-1.5 hover:bg-gray-100 rounded-xl transition-all text-2xl cursor-pointer"
+                                 className="p-2 hover:bg-gray-100 text-slate-500 hover:text-slate-700 rounded-xl transition-all text-xl cursor-pointer"
                                  title={lang === 'it' ? "Modifica" : "Edit"}
                                >
                                  ✏️
@@ -1835,11 +1810,40 @@ export default function App() {
                                <button
                                  id={`delete-med-btn-${med.id}`}
                                  onClick={() => setMedToDeleteId(med.id)}
-                                 className="p-1.5 hover:bg-rose-50 rounded-xl transition-all text-2xl cursor-pointer"
+                                 className="p-2 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl transition-all text-xl cursor-pointer"
                                  title={lang === 'it' ? "Elimina" : "Delete"}
                                >
                                  🗑️
                                </button>
+                             </div>
+                           </div>
+
+                           {/* Full-width Reminder Title & Schedule Info */}
+                           <div className="space-y-1.5 text-left pt-1">
+                             <h4 className="font-extrabold text-base text-[#1E293B] leading-snug tracking-tight break-words flex items-center gap-1.5 flex-wrap">
+                               <span>{med.name}</span>
+                               {med.customVoiceUri && (
+                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200">
+                                   🎙️ {t.recordedVoiceBadge}
+                                 </span>
+                               )}
+                             </h4>
+
+                             {/* Time & Frequency / Dosage placed side by side horizontally */}
+                             <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                               <span className={`inline-flex items-center gap-1.5 text-xs font-black px-2.5 py-1 rounded-xl border ${
+                                 isTaken 
+                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                   : 'bg-slate-100 text-slate-700 border-slate-200'
+                               }`}>
+                                 <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                 <span>{timeSlot}</span>
+                               </span>
+                               {med.dosage && (
+                                 <span className="text-xs font-bold text-[#E58045] bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200/80">
+                                   {med.dosage}
+                                 </span>
+                               )}
                              </div>
                            </div>
 
@@ -1909,39 +1913,85 @@ export default function App() {
                            <div 
                              id={`other-med-${med.id}`}
                              key={med.id}
-                             className="p-4 rounded-3xl border border-[#E2E8F0] bg-[#F8FAFC] flex flex-col gap-2 text-left hover:border-[#CBD5E1] transition-all"
-                           >
-                             <div className="flex justify-between items-start gap-2">
-                               <div className="flex items-center gap-3">
-                                 <div className="w-10 h-10 rounded-2xl bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center text-lg shrink-0">
-                                   {med.category === 'pill' ? '📝' : med.category === 'capsule' ? '🔔' : med.category === 'liquid' ? '⏰' : med.category === 'bottle' ? '📅' : med.category === 'inhaler' ? '🗣️' : med.category === 'cream' ? '📋' : med.category === 'injection' ? '💡' : '📌'}
-                                 </div>
-                                 <div>
-                                   <h5 className="font-extrabold text-slate-700 text-sm leading-tight flex items-center gap-1.5 flex-wrap">
-                                     <span>{med.name}</span>
-                                     {med.customVoiceUri && (
-                                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-purple-50 text-purple-700 border border-purple-200">
-                                         🎙️ {t.recordedVoiceBadge}
-                                       </span>
-                                     )}
-                                   </h5>
-                                   <p className="text-3xs text-slate-500 font-bold mt-0.5">{med.dosage}</p>
-                                 </div>
-                               </div>
-                               <div className="text-[10px] font-extrabold px-2 py-0.5 bg-amber-50 text-[#E58045] border border-amber-100 rounded-lg shrink-0">
-                                 {formatMedicationSchedule(med, lang)}
+                              className="p-4 rounded-3xl border border-[#E2E8F0] bg-white hover:border-[#CBD5E1] transition-all space-y-3 text-left shadow-2xs"
+                            >
+                              {/* Top Bar: Category Icon on left, Edit & Delete actions on right */}
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="w-11 h-11 rounded-2xl bg-[#F1F5F9] border border-[#E2E8F0] flex items-center justify-center text-xl shrink-0">
+                                  {med.category === 'pill' ? '📝' : med.category === 'capsule' ? '🔔' : med.category === 'liquid' ? '⏰' : med.category === 'bottle' ? '📅' : med.category === 'inhaler' ? '🗣️' : med.category === 'cream' ? '📋' : med.category === 'injection' ? '💡' : '📌'}
                                 </div>
-                             </div>
-                             <div className="flex flex-wrap gap-1.5 items-center mt-1 pt-2 border-t border-[#E2E8F0] text-3xs text-slate-400 font-bold">
-                               <span className="uppercase">{lang === 'it' ? "Orari:" : "Times:"}</span>
-                               {medTimes.map((time, tIdx) => (
-                                 <span key={tIdx} className="inline-flex items-center gap-1 font-extrabold text-slate-600 px-1.5 py-0.5 bg-slate-100 rounded">
-                                   <Clock className="w-2.5 h-2.5 text-slate-400" />
-                                   {time}
-                                 </span>
-                               ))}
-                             </div>
-                           </div>
+
+                                {/* Quick options: edit & delete */}
+                                <div className="flex gap-1.5 shrink-0 items-center">
+                                  <button
+                                    id={`other-edit-med-btn-${med.id}`}
+                                    onClick={() => startEditMedication(med)}
+                                    className="p-2 hover:bg-gray-100 text-slate-500 hover:text-slate-700 rounded-xl transition-all text-xl cursor-pointer"
+                                    title={lang === 'it' ? "Modifica" : "Edit"}
+                                  >
+                                    ✏️
+                                  </button>
+                                  <button
+                                    id={`other-delete-med-btn-${med.id}`}
+                                    onClick={() => setMedToDeleteId(med.id)}
+                                    className="p-2 hover:bg-rose-50 text-slate-500 hover:text-rose-600 rounded-xl transition-all text-xl cursor-pointer"
+                                    title={lang === 'it' ? "Elimina" : "Delete"}
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Full-width Reminder Title & Schedule Info */}
+                              <div className="space-y-1.5 text-left pt-1">
+                                <h5 className="font-extrabold text-base text-[#1E293B] leading-snug tracking-tight break-words flex items-center gap-1.5 flex-wrap">
+                                  <span>{med.name}</span>
+                                  {med.customVoiceUri && (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200">
+                                      🎙️ {t.recordedVoiceBadge}
+                                    </span>
+                                  )}
+                                </h5>
+
+                                {/* Time & Frequency / Dosage placed side by side horizontally */}
+                                <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                                  <span className="inline-flex items-center gap-1.5 text-xs font-black px-2.5 py-1 rounded-xl border bg-amber-50 text-[#E58045] border-amber-200/80 shrink-0">
+                                    <span>🔄 {formatMedicationSchedule(med, lang)}</span>
+                                  </span>
+                                  {medTimes.map((time, tIdx) => (
+                                    <span key={tIdx} className="inline-flex items-center gap-1.5 text-xs font-black px-2.5 py-1 rounded-xl border bg-slate-100 text-slate-700 border-slate-200">
+                                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                      <span>{time}</span>
+                                    </span>
+                                  ))}
+                                  {med.dosage && (
+                                    <span className="text-xs font-bold text-[#E58045] bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200/80">
+                                      {med.dosage}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Custom notes if present */}
+                              {med.notes && (
+                                <div className="text-xs text-gray-500 bg-[#F8FAFC] p-2.5 rounded-xl border border-[#E2E8F0] leading-relaxed font-semibold">
+                                  {med.notes}
+                                </div>
+                              )}
+
+                              {/* Voice Test button */}
+                              <div className="flex items-center gap-2 border-t border-[#E2E8F0] pt-3">
+                                <button
+                                  id={`other-say-alert-btn-${med.id}`}
+                                  onClick={() => activateVoiceRemindSystem(med, medTimes[0])}
+                                  className={`py-2 px-3 rounded-xl ${theme.bgLight} ${theme.bgLightHover} border ${theme.borderLight} ${theme.text} ${theme.textHover} font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 cursor-pointer`}
+                                  title="Avvia avviso vocale"
+                                >
+                                  <Volume2 className="w-3.5 h-3.5" />
+                                  <span>{lang === 'it' ? "Ascolta Voce" : "Speaker"}</span>
+                                </button>
+                              </div>
+                            </div>
                          );
                        })}
                      </div>
@@ -2551,49 +2601,49 @@ export default function App() {
         </AnimatePresence>
 
         {/* PERSISTENT TAB BAR FOOTER */}
-        <nav id="bottom-accessible-nav" className={`absolute bottom-0 inset-x-0 h-20 border-t z-40 flex justify-around items-center px-4 ${appTheme === 'dark' ? 'bg-slate-900 border-slate-700' : appTheme === 'warm' ? 'bg-orange-100 border-orange-200' : 'bg-[#F8FAFC] border-[#E2E8F0]'}`}>
+        <nav id="bottom-accessible-nav" className={`absolute bottom-0 inset-x-0 h-20 border-t z-40 grid grid-cols-4 items-center px-2 ${appTheme === 'dark' ? 'bg-slate-900 border-slate-700' : appTheme === 'warm' ? 'bg-orange-100 border-orange-200' : 'bg-[#F8FAFC] border-[#E2E8F0]'}`}>
           <button
             id="nav-btn-agenda"
             onClick={() => setActiveTab('agenda')}
-            className={`flex flex-col items-center justify-center w-16 h-16 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center h-16 w-full rounded-xl transition-all min-w-0 overflow-hidden px-1 ${
               activeTab === 'agenda' ? theme.text : 'text-slate-400 hover:text-[#1E293B]'
             }`}
           >
-            <Calendar className="w-6 h-6" />
-            <span className="text-[10px] font-extrabold mt-1 uppercase tracking-wide">{t.tabToday}</span>
+            <Calendar className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] leading-tight font-extrabold mt-1 uppercase tracking-tight truncate max-w-full text-center block px-0.5">{t.tabToday}</span>
           </button>
 
           <button
             id="nav-btn-history"
             onClick={() => setActiveTab('history')}
-            className={`flex flex-col items-center justify-center w-16 h-16 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center h-16 w-full rounded-xl transition-all min-w-0 overflow-hidden px-1 ${
               activeTab === 'history' ? theme.text : 'text-slate-400 hover:text-[#1E293B]'
             }`}
           >
-            <BellRing className="w-6 h-6" />
-            <span className="text-[10px] font-extrabold mt-1 uppercase tracking-wide">{t.tabMeds}</span>
+            <BellRing className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] leading-tight font-extrabold mt-1 uppercase tracking-tight truncate max-w-full text-center block px-0.5">{t.tabMeds}</span>
           </button>
 
           <button
             id="nav-btn-voice-studio"
             onClick={() => setActiveTab('voice-studio')}
-            className={`flex flex-col items-center justify-center w-16 h-16 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center h-16 w-full rounded-xl transition-all min-w-0 overflow-hidden px-1 ${
               activeTab === 'voice-studio' ? theme.text : 'text-slate-400 hover:text-[#1E293B]'
             }`}
           >
-            <Mic className="w-6 h-6" />
-            <span className="text-[10px] font-extrabold mt-1 uppercase tracking-wide">{t.tabVoices}</span>
+            <Mic className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] leading-tight font-extrabold mt-1 uppercase tracking-tight truncate max-w-full text-center block px-0.5">{t.tabVoices}</span>
           </button>
 
           <button
             id="nav-btn-settings"
             onClick={() => setActiveTab('settings')}
-            className={`flex flex-col items-center justify-center w-16 h-16 rounded-xl transition-all ${
+            className={`flex flex-col items-center justify-center h-16 w-full rounded-xl transition-all min-w-0 overflow-hidden px-1 ${
               activeTab === 'settings' ? theme.text : 'text-slate-400 hover:text-[#1E293B]'
             }`}
           >
-            <Settings className="w-6 h-6" />
-            <span className="text-[10px] font-extrabold mt-1 uppercase tracking-wide">{t.tabSetup}</span>
+            <Settings className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] leading-tight font-extrabold mt-1 uppercase tracking-tight truncate max-w-full text-center block px-0.5">{t.tabSetup}</span>
           </button>
         </nav>
 
