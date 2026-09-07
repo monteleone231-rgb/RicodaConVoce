@@ -11,7 +11,41 @@ import {
   AlertTriangle, Mic, Clock, Camera, Calendar, 
   Smartphone, Bell, Sparkles, Phone, FileText, ChevronRight, ChevronDown, Coffee, Search
 } from 'lucide-react';
-import { IT, US, ES, FR, DE } from 'country-flag-icons/react/3x2';
+// Custom lightweight SVG country flags (100% React 19 compatible, zero external legacy bundler issues)
+const IT = ({ className = "w-4 h-3 inline-block rounded-xs overflow-hidden shadow-2xs" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 3 2" aria-label="Italiano">
+    <rect width="1" height="2" fill="#009246" />
+    <rect width="1" height="2" x="1" fill="#fff" />
+    <rect width="1" height="2" x="2" fill="#ce2b37" />
+  </svg>
+);
+const US = ({ className = "w-4 h-3 inline-block rounded-xs overflow-hidden shadow-2xs" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 19 10" aria-label="English">
+    <rect width="19" height="10" fill="#b22234" />
+    <path d="M0,1.538h19M0,3.076h19M0,4.614h19M0,6.152h19M0,7.69h19M0,9.228h19" stroke="#fff" strokeWidth="0.77" />
+    <rect width="7.6" height="5.384" fill="#3c3b6e" />
+  </svg>
+);
+const ES = ({ className = "w-4 h-3 inline-block rounded-xs overflow-hidden shadow-2xs" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 3 2" aria-label="EspaÃ±ol">
+    <rect width="3" height="2" fill="#c60b1e" />
+    <rect width="3" height="1" y="0.5" fill="#ffc400" />
+  </svg>
+);
+const FR = ({ className = "w-4 h-3 inline-block rounded-xs overflow-hidden shadow-2xs" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 3 2" aria-label="FranÃ§ais">
+    <rect width="1" height="2" fill="#0055a4" />
+    <rect width="1" height="2" x="1" fill="#fff" />
+    <rect width="1" height="2" x="2" fill="#ef4135" />
+  </svg>
+);
+const DE = ({ className = "w-4 h-3 inline-block rounded-xs overflow-hidden shadow-2xs" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 5 3" aria-label="Deutsch">
+    <rect width="5" height="1" fill="#000" />
+    <rect width="5" height="1" y="1" fill="#dd0000" />
+    <rect width="5" height="1" y="2" fill="#ffce00" />
+  </svg>
+);
 
 import { LanguageCode, Medication, MedicationCategory, DoctorNote, TRANSLATIONS } from './types';
 import { playAlarmTone, speakAnnouncement, stopSpeaking, playVoiceAudio, stopVoiceAudio, BARCODE_MOCK_DATABASE, getLocalIsoDate, isScheduledOnDate, getNextOccurrence, formatMedicationSchedule } from './utils';
@@ -389,6 +423,12 @@ export default function App() {
   const [deviceRingtones, setDeviceRingtones] = useState<{ title: string; uri: string }[]>([]);
   const [currentlyPlayingUri, setCurrentlyPlayingUri] = useState<string | null>(null);
 
+  const [activeVoiceReminder, setActiveVoiceReminder] = useState<Medication | null>(null);
+  const [isListeningForConfirm, setIsListeningForConfirm] = useState<boolean>(false);
+  const [speechConfirmError, setSpeechConfirmError] = useState<string>('');
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [showDevDocs, setShowDevDocs] = useState<boolean>(false);
+
   useEffect(() => {
     if (showImportSoundsModal) {
       const android = (window as any).Android;
@@ -430,12 +470,6 @@ export default function App() {
   }, [showImportSoundsModal]);
 
   // Interactive speaking notification modal
-  const [activeVoiceReminder, setActiveVoiceReminder] = useState<Medication | null>(null);
-  const [isListeningForConfirm, setIsListeningForConfirm] = useState<boolean>(false);
-  const [speechConfirmError, setSpeechConfirmError] = useState<string>('');
-  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
-  const [showDevDocs, setShowDevDocs] = useState<boolean>(false);
-
   // Monitor speaking events and state
   useEffect(() => {
     const handleSpeechEvent = (e: Event) => {
