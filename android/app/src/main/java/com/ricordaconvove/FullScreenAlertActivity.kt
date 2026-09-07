@@ -34,6 +34,15 @@ class FullScreenAlertActivity : ComponentActivity() {
             return
         }
 
+        // Se l'utente ha disattivato "Display Attivo alla Notifica" (Always on Display), non forzare l'accensione e apertura a tutto schermo
+        val prefs = getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
+        val alwaysOnEnabled = prefs.getBoolean("alwaysOnDisplay", false)
+        if (!alwaysOnEnabled) {
+            // L'utente desidera ricevere solo la notifica nella barra di stato in alto
+            finish()
+            return
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)

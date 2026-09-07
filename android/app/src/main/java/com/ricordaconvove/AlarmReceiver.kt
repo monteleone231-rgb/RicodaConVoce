@@ -7,9 +7,11 @@ import android.os.PowerManager
 import android.util.Log
 
 class AlarmReceiver : BroadcastReceiver() {
+
     companion object {
         const val ACTION_MARK_TAKEN = "com.ricordaconvove.ACTION_MARK_TAKEN"
         const val ACTION_SNOOZE = "com.ricordaconvove.ACTION_SNOOZE"
+        const val ACTION_DISMISS = "com.ricordaconvove.ACTION_DISMISS"
         private const val TAG = "AlarmReceiver"
         private const val WAKELOCK_TIMEOUT_MS = 60000L // 1 minute
         const val AUTO_SNOOZE_CALL_MINUTES = 10 // Auto-posticipo dopo 10 minuti durante una chiamata
@@ -25,7 +27,7 @@ class AlarmReceiver : BroadcastReceiver() {
         val timeSlot = intent.getStringExtra("TIME_SLOT") ?: ""
         val customVoicePath = intent.getStringExtra("CUSTOM_VOICE_PATH") ?: ""
 
-        // 1. Gestione azione rapida: "Ho preso"
+        // 1. Gestione azione rapida da notifica: "Fatto / Ho preso"
         if (action == ACTION_MARK_TAKEN) {
             Log.d(TAG, "Azione 'Ho preso' ricevuta per $name ($timeSlot, ID: $id)")
             NotificationHelper.cancelNotification(context, id)
@@ -39,7 +41,19 @@ class AlarmReceiver : BroadcastReceiver() {
             return
         }
 
-        // 2. Gestione azione rapida: "Posticipa (10m)"
+        // 2. Gestione azione rapida da notifica: "Zittisci / Ferma notifica"
+        if (action == ACTION_DISMISS) {
+            Log.d(TAG, "Azione 'Zittisci / Ferma' ricevuta per $name (ID: $id)")
+            NotificationHelper.cancelNotification(context, id)
+            try {
+                context.stopService(Intent(context, ReminderAlertService::class.java))
+            } catch (e: Exception) {
+                Log.e(TAG, "Errore arresto servizio su azione Zittisci", e)
+            }
+            return
+        }
+
+        // 3. Gestione azione rapida da notifica: "Posticipa (10m)"
         if (action == ACTION_SNOOZE) {
             Log.d(TAG, "Azione 'Posticipa' ricevuta per $name (ID: $id)")
             NotificationHelper.cancelNotification(context, id)
@@ -63,10 +77,9 @@ class AlarmReceiver : BroadcastReceiver() {
 
         Log.d(TAG, "Allarme scattato! ID: $id, Nome: $name, Prompt: $voicePrompt, CustomVoicePath: $customVoicePath")
 
-        // 3. Controllo: l'utente sta parlando al telefono (GSM o WhatsApp/Telegram/VoIP)?
+        // 4. Controllo: l'utente sta parlando al telefono (GSM o WhatsApp/Telegram/VoIP)?
         if (NotificationHelper.isInPhoneCallOrRinging(context)) {
             Log.d(TAG, "Chiamata attiva rilevata durante l'allarme! Sopprimo audio/voce e full-screen. Mostro notifica discreta con badge e auto-posticipo tra $AUTO_SNOOZE_CALL_MINUTES min.")
-
             // Mostra la notifica visiva nella barra di stato in alto con badge / punto rosso sull'icona
             NotificationHelper.showCallQuietNotification(
                 context = context,
@@ -78,8 +91,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 customVoicePath = customVoicePath,
                 snoozeMinutes = AUTO_SNOOZE_CALL_MINUTES
             )
-
-            // Pianifica l'auto-posticipo vocale dopo 5 minuti
+            // Pianifica l'auto-posticipo vocale dopo i minuti specificati
             val autoSnoozeMillis = System.currentTimeMillis() + AUTO_SNOOZE_CALL_MINUTES * 60 * 1000L
             AlarmScheduler(context).scheduleExactAlarm(
                 timeMillis = autoSnoozeMillis,
@@ -93,7 +105,7 @@ class AlarmReceiver : BroadcastReceiver() {
             return
         }
 
-        // 4. Modalità normale (nessuna telefonata): avvia voce/suoneria e overlay a schermo intero
+        // 5. Modalità normale (nessuna telefonata): avvia voce/suoneria e notifica con pulsanti interattivi
         context.runWithWakeLock("ricordaconvoce::AlarmWakeLockTag", WAKELOCK_TIMEOUT_MS) {
             val serviceIntent = Intent(context, ReminderAlertService::class.java).apply {
                 putExtra("ALARM_ID", id)
@@ -113,7 +125,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 Log.e(TAG, "Impossibile avviare ReminderAlertService", e)
             }
 
-            // Attiva notifica e schermata intera con FullScreenIntent
+            // Attiva notifica in barra di stato con pulsanti "Zittisci" e "Fatto", e fullScreenIntent
             NotificationHelper.showNotification(context, id, name, voicePrompt, dosage, timeSlot, customVoicePath)
         }
     }

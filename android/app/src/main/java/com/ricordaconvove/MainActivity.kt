@@ -295,6 +295,32 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
         }
     }
 
+        override fun onResume() {
+        super.onResume()
+        handleNotificationLaunch(intent)
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleNotificationLaunch(intent)
+    }
+
+    private fun handleNotificationLaunch(launchIntent: android.content.Intent?) {
+        try {
+            if (launchIntent != null && launchIntent.getBooleanExtra("OPEN_FROM_NOTIFICATION", false)) {
+                val alarmId = launchIntent.getIntExtra("ALARM_ID", -1)
+                Log.d(TAG_NATIVE, "App opened from reminder notification (ID: $alarmId) - stopping alert audio")
+                stopService(android.content.Intent(this, ReminderAlertService::class.java))
+                if (alarmId != -1) {
+                    NotificationHelper.cancelNotification(this, alarmId)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG_NATIVE, "Error handling notification launch", e)
+        }
+    }
+
     override fun onDestroy() {
         try {
             stopSpeechRecognition()
@@ -563,6 +589,25 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
         }
 
         @JavascriptInterface
+                @JavascriptInterface
+        fun stopAlertService(alarmId: Int = -1) {
+            try {
+                context.stopService(android.content.Intent(context, ReminderAlertService::class.java))
+                Log.d("RicordaConVoceNative", "Stopped ReminderAlertService from JS.")
+            } catch (e: Exception) {
+                Log.e("RicordaConVoceNative", "Error stopping ReminderAlertService", e)
+            }
+            if (alarmId != -1) {
+                NotificationHelper.cancelNotification(context, alarmId)
+            }
+        }
+
+        @JavascriptInterface
+        fun unmarkSlotTakenInNative(medName: String, timeSlot: String, dateStr: String) {
+            NotificationHelper.unmarkSlotTaken(context, medName, timeSlot, dateStr)
+        }
+
+        @JavascriptInterface
         fun cancelAlarm(id: Int) {
             scheduler.cancelAlarm(id)
             try {
@@ -612,15 +657,16 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
         }
 
         @JavascriptInterface
-        fun savePreferencesToNative(lang: String, voiceEnabled: Boolean, speed: Double, tone: String) {
+        fun savePreferencesToNative(lang: String, voiceEnabled: Boolean, speed: Double, tone: String, alwaysOnDisplay: Boolean = false) {
             val prefs = context.getSharedPreferences("RicordaConVocePrefs", Context.MODE_PRIVATE)
             prefs.edit {
                 putString("lang", lang)
                 putBoolean("voiceEnabled", voiceEnabled)
                 putFloat("speed", speed.toFloat())
                 putString("tone", tone)
+                putBoolean("alwaysOnDisplay", alwaysOnDisplay)
             }
-            Log.d("RicordaConVoceNative", "Saved preferences to native storage: lang=$lang, voiceEnabled=$voiceEnabled, speed=$speed, tone=$tone")
+            Log.d("RicordaConVoceNative", "Saved preferences to native storage: lang=$lang, voiceEnabled=$voiceEnabled, speed=$speed, tone=$tone, alwaysOnDisplay=$alwaysOnDisplay")
         }
 
         private var nativeMediaRecorder: MediaRecorder? = null

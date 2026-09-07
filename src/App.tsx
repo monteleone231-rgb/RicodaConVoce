@@ -574,14 +574,15 @@ export default function App() {
             lang,
             voiceAnnounceEnabled,
             speechSpeed,
-            speechTone
+            speechTone,
+            alwaysOnDisplay
           );
         } catch (e) {
           console.error("[RicordaConVoce] Failed to save preferences to native:", e);
         }
       }
     }
-  }, [lang, voiceAnnounceEnabled, speechSpeed, speechTone]);
+  }, [lang, voiceAnnounceEnabled, speechSpeed, speechTone, alwaysOnDisplay]);
 
   // Stop ongoing voice announcements and device sounds when the active reminder is dismissed, taken, or closed
   useEffect(() => {
@@ -593,13 +594,22 @@ export default function App() {
         console.warn("Failed to stop speaking on activeVoiceReminder clear:", e);
       }
 
-      // Stop native device alarm/sound
+      // Stop native device alarm/sound and background alert service
       const android = (window as any).Android;
-      if (android && typeof android.stopDeviceSound === 'function') {
-        try {
-          android.stopDeviceSound();
-        } catch (e) {
-          console.error("Failed to stop native device sound on activeVoiceReminder clear:", e);
+      if (android) {
+        if (typeof android.stopDeviceSound === 'function') {
+          try {
+            android.stopDeviceSound();
+          } catch (e) {
+            console.error("Failed to stop native device sound on activeVoiceReminder clear:", e);
+          }
+        }
+        if (typeof android.stopAlertService === 'function') {
+          try {
+            android.stopAlertService();
+          } catch (e) {
+            console.error("Failed to stop native alert service on activeVoiceReminder clear:", e);
+          }
         }
       }
     }
@@ -1075,6 +1085,20 @@ export default function App() {
           }
           if (item.stockCurrent !== undefined) {
             newStock = item.stockCurrent + 1;
+          }
+          // Prevent auto-trigger grace period from immediately re-firing an alarm that the user manually unticked
+          const dismissedKey = `${med.id}_${slotKey}`;
+          dismissedAutoTriggersRef.current[dismissedKey] = {
+            dismissedAt: Date.now(),
+            type: "dismiss"
+          };
+          const android = (window as any).Android;
+          if (android && typeof android.unmarkSlotTakenInNative === "function") {
+            try {
+              android.unmarkSlotTakenInNative(med.name, actualSlot, todayStr);
+            } catch (e) {
+              console.error("[RicordaConVoce] Error calling unmarkSlotTakenInNative:", e);
+            }
           }
         } else {
           updatedHistory[slotKey] = true;
@@ -1641,10 +1665,13 @@ export default function App() {
                         stopSpeaking();
                       } catch (e) {}
                       const android = (window as any).Android;
-                      if (android && typeof android.stopDeviceSound === 'function') {
-                        try {
-                          android.stopDeviceSound();
-                        } catch (e) {}
+                      if (android) {
+                        if (typeof android.stopDeviceSound === 'function') {
+                          try { android.stopDeviceSound(); } catch (e) {}
+                        }
+                        if (typeof android.stopAlertService === 'function') {
+                          try { android.stopAlertService(activeVoiceReminder.nativeId || -1); } catch (e) {}
+                        }
                       }
                       toggleTakenStatusForSlot(activeVoiceReminder, activeVoiceReminderSlot);
                       setActiveVoiceReminder(null);
@@ -1664,10 +1691,13 @@ export default function App() {
                       stopSpeaking();
                     } catch (e) {}
                     const android = (window as any).Android;
-                    if (android && typeof android.stopDeviceSound === 'function') {
-                      try {
-                        android.stopDeviceSound();
-                      } catch (e) {}
+                    if (android) {
+                      if (typeof android.stopDeviceSound === 'function') {
+                        try { android.stopDeviceSound(); } catch (e) {}
+                      }
+                      if (typeof android.stopAlertService === 'function') {
+                        try { android.stopAlertService(activeVoiceReminder.nativeId || -1); } catch (e) {}
+                      }
                     }
                     if (activeVoiceReminder) {
                       const todayStr = getLocalIsoDate();
