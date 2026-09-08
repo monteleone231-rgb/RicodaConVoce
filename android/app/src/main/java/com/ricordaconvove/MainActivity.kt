@@ -589,7 +589,6 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
         }
 
         @JavascriptInterface
-                @JavascriptInterface
         fun stopAlertService(alarmId: Int = -1) {
             try {
                 context.stopService(android.content.Intent(context, ReminderAlertService::class.java))

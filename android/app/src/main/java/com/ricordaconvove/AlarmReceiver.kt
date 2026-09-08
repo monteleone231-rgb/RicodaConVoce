@@ -85,10 +85,8 @@ class AlarmReceiver : BroadcastReceiver() {
                 context = context,
                 id = id,
                 medName = name,
-                voicePrompt = voicePrompt,
                 dosage = dosage,
                 timeSlot = timeSlot,
-                customVoicePath = customVoicePath,
                 snoozeMinutes = AUTO_SNOOZE_CALL_MINUTES
             )
             // Pianifica l'auto-posticipo vocale dopo i minuti specificati

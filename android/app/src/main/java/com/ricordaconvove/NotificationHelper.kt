@@ -210,10 +210,8 @@ object NotificationHelper {
         context: Context,
         id: Int,
         medName: String,
-        voicePrompt: String = "",
         dosage: String = "",
         timeSlot: String = "",
-        customVoicePath: String = "",
         snoozeMinutes: Int = 10
     ) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
