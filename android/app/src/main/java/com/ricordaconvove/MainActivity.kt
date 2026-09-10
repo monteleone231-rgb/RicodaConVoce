@@ -791,6 +791,17 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
         }
 
         @JavascriptInterface
+        fun requestNotificationPermission() {
+            if (Build.VERSION.SDK_INT >= 33) { // Android 13+
+                activity.runOnUiThread {
+                    activity.requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 102)
+                }
+            } else {
+                openNotificationSettings()
+            }
+        }
+
+        @JavascriptInterface
         fun openNotificationSettings() {
             try {
                 val intent = android.content.Intent()
@@ -830,6 +841,28 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
         }
 
         @JavascriptInterface
+        fun requestBatteryOptimizationDirect(): Boolean {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val pm = context.getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager
+                    if (pm != null && !pm.isIgnoringBatteryOptimizations(context.packageName)) {
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = android.net.Uri.parse("package:" + context.packageName)
+                            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        context.startActivity(intent)
+                        Log.d("RicordaConVoceNative", "Direct battery optimization dialog requested.")
+                        return true
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("RicordaConVoceNative", "Direct battery prompt failed, fallback to list", e)
+            }
+            openBatteryOptimizationSettings()
+            return false
+        }
+
+        @JavascriptInterface
         fun openBatteryOptimizationSettings() {
             try {
                 val intent = android.content.Intent()
@@ -844,6 +877,49 @@ class MainActivity : BridgeActivity(), TextToSpeech.OnInitListener {
             } catch (e: Exception) {
                 Log.e("RicordaConVoceNative", "Error opening battery settings", e)
                 openAppSettings()
+            }
+        }
+
+        @JavascriptInterface
+        fun getPermissionsStatus(): String {
+            return try {
+                val notificationsEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+                    nm?.areNotificationsEnabled() ?: true
+                } else {
+                    true
+                }
+
+                val batteryIgnoring = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val pm = context.getSystemService(Context.POWER_SERVICE) as? android.os.PowerManager
+                    pm?.isIgnoringBatteryOptimizations(context.packageName) ?: true
+                } else {
+                    true
+                }
+
+                val exactAlarms = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val am = context.getSystemService(Context.ALARM_SERVICE) as? android.app.AlarmManager
+                    am?.canScheduleExactAlarms() ?: true
+                } else {
+                    true
+                }
+
+                val overlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    android.provider.Settings.canDrawOverlays(context)
+                } else {
+                    true
+                }
+
+                val json = JSONObject().apply {
+                    put("notifications", notificationsEnabled)
+                    put("battery", batteryIgnoring)
+                    put("exactAlarms", exactAlarms)
+                    put("overlay", overlay)
+                }
+                json.toString()
+            } catch (e: Exception) {
+                Log.e("RicordaConVoceNative", "Error getting permission status", e)
+                "{}"
             }
         }
 

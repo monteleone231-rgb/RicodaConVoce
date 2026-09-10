@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TRANSLATIONS, LanguageCode } from '../types';
 import { speakAnnouncement } from '../utils';
-import { Globe, ArrowRight, Volume2, ShieldCheck, Music, Mic, Settings, Battery, Eye, Bell, Check } from 'lucide-react';
+import { Globe, ArrowRight, Volume2, ShieldCheck, Music, Mic, Settings, Battery, Eye, Bell, Check, Sparkles, Zap, CheckCircle2 } from 'lucide-react';
 import bellIcon from '../assets/images/app_icon_turquoise_1788352552455.jpg';
 
 interface OnboardingProps {
@@ -20,6 +20,41 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [clickedSettings, setClickedSettings] = useState<Record<string, boolean>>({});
   const [mockToast, setMockToast] = useState<string | null>(null);
   const [imgError, setImgError] = useState<boolean>(false);
+  const [permStatus, setPermStatus] = useState<{
+    notifications?: boolean;
+    battery?: boolean;
+    exactAlarms?: boolean;
+    overlay?: boolean;
+  }>({});
+
+  // Query real-time permission status from native Android bridge
+  const checkPermissions = useCallback(() => {
+    const android = (window as any).Android;
+    if (android && typeof android.getPermissionsStatus === 'function') {
+      try {
+        const raw = android.getPermissionsStatus();
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          setPermStatus(parsed);
+        }
+      } catch (e) {
+        console.error("Error reading permission status:", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    checkPermissions();
+    const handleFocus = () => checkPermissions();
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+    const interval = setInterval(checkPermissions, 1500);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+      clearInterval(interval);
+    };
+  }, [checkPermissions]);
 
   // Auto-hide toast after 4 seconds
   useEffect(() => {
@@ -33,6 +68,63 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   const t = TRANSLATIONS[lang];
 
+  // Quick 1-tap setup orchestrator
+  const handleQuickSetup = () => {
+    const android = (window as any).Android;
+    if (!android) {
+      setPermStatus({
+        battery: true,
+        notifications: true,
+        exactAlarms: true,
+        overlay: true
+      });
+      setMockToast(
+        lang === 'it'
+          ? "Simulatore Web: tutte le autorizzazioni sono state contrassegnate come attive!"
+          : "Web Simulator: all permissions marked active!"
+      );
+      return;
+    }
+
+    // 1. Direct battery prompt (system dialog 1-tap)
+    if (!permStatus.battery) {
+      if (typeof android.requestBatteryOptimizationDirect === 'function') {
+        android.requestBatteryOptimizationDirect();
+      } else if (typeof android.openBatteryOptimizationSettings === 'function') {
+        android.openBatteryOptimizationSettings();
+      }
+      return;
+    }
+
+    // 2. Direct push notification prompt (Android 13+ system dialog 1-tap)
+    if (!permStatus.notifications) {
+      if (typeof android.requestNotificationPermission === 'function') {
+        android.requestNotificationPermission();
+      } else if (typeof android.openNotificationSettings === 'function') {
+        android.openNotificationSettings();
+      }
+      return;
+    }
+
+    // 3. Exact alarms settings
+    if (!permStatus.exactAlarms) {
+      if (typeof android.openExactAlarmSettings === 'function') {
+        android.openExactAlarmSettings();
+      }
+      return;
+    }
+
+    // 4. Lock screen / Fullscreen overlay
+    if (!permStatus.overlay) {
+      if (typeof android.openFullScreenIntentSettings === 'function') {
+        android.openFullScreenIntentSettings();
+      } else if (typeof android.openOverlaySettings === 'function') {
+        android.openOverlaySettings();
+      }
+      return;
+    }
+  };
+
   const renderPermissionButton = (
     id: string,
     colorTheme: 'blue' | 'amber' | 'purple' | 'emerald' | 'rose',
@@ -40,11 +132,47 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     itText: string,
     enText: string,
     webExplanationIt: string,
-    webExplanationEn: string
+    webExplanationEn: string,
+    isActuallyGranted: boolean = false
   ) => {
     const isClicked = clickedSettings[id];
     const btnLabel = lang === 'it' ? itText : enText;
-    const subLabel = lang === 'it' ? '(Tocca qui per aprire le impostazioni)' : '(Tap here to open settings)';
+    const subLabel = lang === 'it' ? '(Tocca qui per applicare)' : '(Tap here to apply)';
+
+    if (isActuallyGranted) {
+      return (
+        <div className="w-full mt-2">
+          <button
+            type="button"
+            onClick={() => {
+              const android = (window as any).Android;
+              if (android) {
+                onClickAction();
+              } else {
+                setMockToast(
+                  lang === 'it'
+                    ? "Questa autorizzazione è già concessa e attiva sul tuo dispositivo!"
+                    : "This permission is already granted and active on your device!"
+                );
+              }
+            }}
+            className="w-full relative flex items-center justify-between py-2 px-3.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-900 font-extrabold text-xs transition-all hover:bg-emerald-100 active:scale-[0.99] shadow-xs"
+          >
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white shadow-xs">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+              </span>
+              <span className="font-extrabold text-emerald-900 text-xs">
+                {lang === 'it' ? '✓ Già Attivo sul Telefono' : '✓ Already Active'}
+              </span>
+            </div>
+            <span className="text-[10px] text-emerald-700 underline font-bold">
+              {lang === 'it' ? 'Riapri' : 'Reopen'}
+            </span>
+          </button>
+        </div>
+      );
+    }
     
     const themeStyles = {
       blue: {
@@ -347,229 +475,348 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 </motion.div>
               )}
 
-              {step === 3 && (
-                <motion.div
-                  key="step3"
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-4 text-left"
-                >
-                  <div className="text-center space-y-2 mb-4">
-                    <div className="mx-auto w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100">
-                      <Settings className="w-8 h-8 animate-spin-slow" />
-                    </div>
-                    <h2 className="text-xl sm:text-2xl font-black font-display tracking-tight text-[#1E3A8A]">
-                      {lang === 'it' 
-                        ? 'Configurazione Android Necessaria' 
-                        : lang === 'es'
-                        ? 'Configuración de Android Necesaria'
-                        : lang === 'fr'
-                        ? 'Configuration Android Nécessaire'
-                        : 'Android Configuration Required'}
-                    </h2>
-                    <p className="text-xs text-[#64748B] font-medium leading-relaxed">
-                      {lang === 'it'
-                        ? "Per garantire che l'allarme vocale suoni con precisione all'orario impostato, anche da telefono bloccato o app chiusa, configura ora queste impostazioni:"
-                        : "To ensure the voice alarm sounds exactly at the scheduled time, even when your phone is locked or the app is closed, please configure these settings now:"}
-                    </p>
-                  </div>
+              {step === 3 && (() => {
+                const isBatteryGranted = !!permStatus.battery;
+                const isNotificationsGranted = !!permStatus.notifications;
+                const isExactAlarmsGranted = !!permStatus.exactAlarms;
+                const isOverlayGranted = !!permStatus.overlay;
+                const grantedCount = [isBatteryGranted, isNotificationsGranted, isExactAlarmsGranted, isOverlayGranted].filter(Boolean).length;
+                const allGranted = grantedCount === 4;
 
-                  <div className="space-y-3 max-h-[38vh] overflow-y-auto pr-1">
-                    {/* ATTENTION BANNER FOR OPPO, REALME, XIAOMI */}
-                    <div className="p-3 bg-rose-50 rounded-xl border border-rose-200 shadow-sm space-y-2">
-                      <p className="text-[11px] sm:text-xs text-rose-800 font-bold leading-relaxed">
-                        {lang === 'it' ? (
-                          <>
-                            ⚠️ <strong className="font-black text-rose-950">IMPORTANTE (Oppo, Realme, Xiaomi):</strong> Se l'allarme vocale non compare o non suona a schermo spento, devi assolutamente impostare su <strong className="text-rose-900 font-black">"Consentito"</strong> l'opzione <strong className="text-rose-900 font-black">"Invia notifiche a schermo intero"</strong> e <strong className="text-rose-900 font-black">"Consenti notifiche"</strong> nelle impostazioni del telefono.
-                          </>
-                        ) : (
-                          <>
-                            ⚠️ <strong className="font-black text-rose-950">IMPORTANT (Oppo, Realme, Xiaomi):</strong> If the voice alarm doesn't pop up or ring when the screen is off, you must set <strong className="text-rose-900 font-black">"Send full screen notifications"</strong> and <strong className="text-rose-900 font-black">"Allow notifications"</strong> to <strong className="text-rose-900 font-black">"Allowed"</strong> in your phone settings.
-                          </>
-                        )}
+                return (
+                  <motion.div
+                    key="step3"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-3.5 text-left"
+                  >
+                    <div className="text-center space-y-1.5 mb-2">
+                      <div className="mx-auto w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100 shadow-xs">
+                        <Settings className="w-7 h-7 animate-spin-slow" />
+                      </div>
+                      <h2 className="text-xl sm:text-2xl font-black font-display tracking-tight text-[#1E3A8A]">
+                        {lang === 'it' 
+                          ? 'Configurazione Guidata Android' 
+                          : lang === 'es'
+                          ? 'Configuración Guiada de Android'
+                          : lang === 'fr'
+                          ? 'Configuration Guidée Android'
+                          : 'Guided Android Configuration'}
+                      </h2>
+                      <p className="text-xs text-[#64748B] font-medium leading-relaxed max-w-sm mx-auto">
+                        {lang === 'it'
+                          ? "Per far suonare e parlare i promemoria all'orario esatto (anche a schermo spento), bastano pochissimi secondi."
+                          : "To make voice alarms sound and speak exactly on time (even when locked), it only takes a few seconds."}
                       </p>
-                      {renderPermissionButton(
-                        'oppo_fullscreen',
-                        'rose',
-                        () => {
-                          const android = (window as any).Android;
-                          if (android && typeof android.openFullScreenIntentSettings === 'function') {
-                            android.openFullScreenIntentSettings();
-                          } else if (android && typeof android.openNotificationSettings === 'function') {
-                            android.openNotificationSettings();
-                          }
-                        },
-                        'Apri Notifiche Schermo Intero',
-                        'Open Full Screen Notifications',
-                        'Questo pulsante aprirà direttamente la pagina di configurazione delle notifiche a tutto schermo (FullScreen Intent) per consentire all\'allarme vocale di mostrarsi anche a telefono bloccato.',
-                        'This button will open the Full Screen notification settings directly on your device, allowing the voice alarm to prompt even when your phone is locked.'
-                      )}
                     </div>
 
-                    {/* Item 1 */}
-                    <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col gap-2">
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0 border border-blue-100 text-xs font-extrabold">
-                          1
+                    {/* QUICK 1-TAP ACTION CARD */}
+                    {allGranted ? (
+                      <div className="p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border-2 border-emerald-300 shadow-xs flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                          <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
                         </div>
-                        <div className="space-y-1 flex-1">
-                          <h3 className="font-extrabold text-xs sm:text-sm text-[#1E293B] flex items-center gap-1.5">
-                            <Bell className="w-4 h-4 text-blue-500 shrink-0" />
-                            {lang === 'it' ? 'Sveglie Precise (Alarms & Reminders)' : 'Precise Alarms & Reminders'}
+                        <div className="space-y-0.5 flex-1">
+                          <h3 className="font-black text-xs text-emerald-950 flex items-center gap-1.5">
+                            {lang === 'it' ? '🎉 Configurazione Completata al 100%!' : '🎉 100% Configured!'}
                           </h3>
-                          <p className="text-[11px] sm:text-xs text-[#475569] leading-relaxed">
-                            {lang === 'it' ? (
-                              <>
-                                Vai in <strong className="text-blue-600 font-bold">Impostazioni del Telefono &rarr; App &rarr; Accesso speciale alle app &rarr; Sveglie e promemoria</strong>. Cerca <strong className="text-blue-600 font-bold">Ricorda con Voce</strong> e assicurati che la spunta sia <strong className="text-emerald-600 font-bold">ATTIVA</strong>.
-                              </>
-                            ) : (
-                              <>
-                                Go to <strong className="text-blue-600 font-bold">Settings &rarr; Apps &rarr; Special App Access &rarr; Alarms & Reminders</strong>. Find <strong className="text-blue-600 font-bold">Ricorda con Voce</strong> and make sure it is <strong className="text-emerald-600 font-bold">ENABLED</strong>.
-                              </>
-                            )}
+                          <p className="text-[11px] text-emerald-800 font-medium leading-tight">
+                            {lang === 'it'
+                              ? "Tutte le autorizzazioni sono attive. L'app suonerà sempre in perfetto orario!"
+                              : "All permissions are active. Your alarms will always trigger on time!"}
                           </p>
                         </div>
                       </div>
-                      {renderPermissionButton(
-                        'precise_alarms',
-                        'blue',
-                        () => {
-                          const android = (window as any).Android;
-                          if (android && typeof android.openExactAlarmSettings === 'function') {
-                            android.openExactAlarmSettings();
-                          }
-                        },
-                        'Configura Sveglie Precise',
-                        'Configure Precise Alarms',
-                        'Questo pulsante aprirà la sezione speciale "Sveglie e promemoria" di Android per garantire l\'assoluta precisione temporale dell\'allarme vocale per i tuoi promemoria.',
-                        'This button will open the Android "Alarms & Reminders" special access page to guarantee high-precision scheduling for your vocal alarms.'
-                      )}
-                    </div>
- 
-                    {/* Item 2 */}
-                    <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col gap-2">
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 shrink-0 border border-amber-100 text-xs font-extrabold">
-                          2
+                    ) : (
+                      <div className="p-3.5 bg-gradient-to-br from-blue-50 via-indigo-50 to-amber-50 rounded-2xl border-2 border-blue-300 shadow-sm space-y-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-400 text-amber-950 font-black shadow-xs">
+                              <Zap className="w-4 h-4 fill-amber-950 text-amber-950" />
+                            </span>
+                            <div>
+                              <h3 className="font-extrabold text-xs text-slate-900 leading-tight">
+                                {lang === 'it' ? 'Configura con 1 Tocco' : '1-Tap Quick Setup'}
+                              </h3>
+                              <p className="text-[10px] text-slate-600 font-medium">
+                                {lang === 'it' ? 'Apre subito la richiesta del telefono a schermo' : 'Directly opens the system prompt'}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-200 shrink-0">
+                            {grantedCount} / 4 {lang === 'it' ? 'attivi' : 'active'}
+                          </span>
                         </div>
-                        <div className="space-y-1 flex-1">
-                          <h3 className="font-extrabold text-xs sm:text-sm text-[#1E293B] flex items-center gap-1.5">
-                            <Battery className="w-4 h-4 text-amber-500 shrink-0" />
-                            {lang === 'it' ? 'Escludi dall\'Ottimizzazione Batteria' : 'Disable Battery Optimization'}
-                          </h3>
-                          <p className="text-[11px] sm:text-xs text-[#475569] leading-relaxed">
-                            {lang === 'it' ? (
-                              <>
-                                Vai in <strong className="text-amber-600 font-bold">Impostazioni del Telefono &rarr; App &rarr; Ricorda con Voce &rarr; Batteria</strong>. Imposta su <strong className="text-amber-600 font-bold">"Senza restrizioni"</strong>. Questo impedirà ad Android di chiudere l'app in background o standby.
-                              </>
-                            ) : (
-                              <>
-                                Go to <strong className="text-amber-600 font-bold">Settings &rarr; Apps &rarr; Ricorda con Voce &rarr; Battery</strong>. Set to <strong className="text-amber-600 font-bold">"Unrestricted"</strong>. This prevents Android from killing the app in background or standby.
-                              </>
-                            )}
-                          </p>
+
+                        {/* Progress Bar */}
+                        <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-blue-500 to-emerald-500 h-full transition-all duration-500 rounded-full"
+                            style={{ width: `${(grantedCount / 4) * 100}%` }}
+                          />
                         </div>
+
+                        <button
+                          type="button"
+                          onClick={handleQuickSetup}
+                          className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 transition-all"
+                        >
+                          <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300 animate-pulse" />
+                          <span>
+                            {lang === 'it'
+                              ? (!isBatteryGranted
+                                  ? '⚡ 1 Tocco: Consenti Batteria Senza Limiti'
+                                  : !isNotificationsGranted
+                                  ? '🔔 1 Tocco: Consenti Notifiche'
+                                  : !isExactAlarmsGranted
+                                  ? '⏰ 1 Tocco: Attiva Sveglie Precise'
+                                  : '📱 1 Tocco: Consenti Schermo Intero')
+                              : '⚡ 1-Tap: Apply Next Permission'}
+                          </span>
+                        </button>
                       </div>
-                      {renderPermissionButton(
-                        'battery_optimization',
-                        'amber',
-                        () => {
-                          const android = (window as any).Android;
-                          if (android && typeof android.openBatteryOptimizationSettings === 'function') {
-                            android.openBatteryOptimizationSettings();
-                          }
-                        },
-                        'Escludi Ottimizzazione Batteria',
-                        'Disable Battery Optimization',
-                        'Questo pulsante aprirà la schermata di ottimizzazione della batteria di Android per consentire a Ricorda con Voce di funzionare stabilmente senza essere chiusa dal sistema operativo.',
-                        'This button will open the Android battery optimization controls, letting you set Ricorda con Voce to "Unrestricted" so that background reminders never fail.'
-                      )}
-                    </div>
- 
-                    {/* Item 3 */}
-                    <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col gap-2">
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-500 shrink-0 border border-purple-100 text-xs font-extrabold">
-                          3
-                        </div>
-                        <div className="space-y-1 flex-1">
-                          <h3 className="font-extrabold text-xs sm:text-sm text-[#1E293B] flex items-center gap-1.5">
-                            <Eye className="w-4 h-4 text-purple-500 shrink-0" />
-                            {lang === 'it' ? 'Mostra sopra altre app / Schermata di Blocco' : 'Display Over Other Apps / Lock Screen'}
-                          </h3>
-                          <p className="text-[11px] sm:text-xs text-[#475569] leading-relaxed">
-                            {lang === 'it' ? (
-                              <>
-                                Per far sì che l'allarme a tutto schermo (con i comandi vocali) appaia anche a telefono bloccato, attiva il permesso <strong className="text-purple-600 font-bold">"Mostra sopra altre app"</strong> o <strong className="text-purple-600 font-bold">"Visualizza sulla schermata di blocco"</strong>.
-                              </>
+                    )}
+
+                    <div className="space-y-2.5 max-h-[36vh] overflow-y-auto pr-1">
+                      {/* Item 1: Batteria senza restrizioni (Direct native 1-tap dialog) */}
+                      <div className={`p-3 rounded-xl border transition-all ${
+                        isBatteryGranted 
+                          ? 'bg-emerald-50/50 border-emerald-200 shadow-xs' 
+                          : 'bg-white border-[#E2E8F0] shadow-sm'
+                      }`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex gap-2.5 flex-1">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border text-xs font-black ${
+                              isBatteryGranted 
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                                : 'bg-amber-50 text-amber-600 border-amber-200'
+                            }`}>
+                              {isBatteryGranted ? <Check className="w-4 h-4 stroke-[3]" /> : '1'}
+                            </div>
+                            <div className="space-y-0.5 flex-1">
+                              <h3 className="font-extrabold text-xs text-[#1E293B] flex items-center gap-1.5">
+                                <Battery className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                {lang === 'it' ? 'Batteria Senza Restrizioni' : 'Disable Battery Optimization'}
+                              </h3>
+                              <p className="text-[11px] text-[#475569] leading-tight">
+                                {lang === 'it' 
+                                  ? "Impedisce al telefono di 'addormentare' l'app quando è in standby."
+                                  : "Prevents Android from putting the app to sleep in standby."}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 flex items-center gap-1 ${
+                            isBatteryGranted 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                              : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          }`}>
+                            {isBatteryGranted ? (
+                              <><Check className="w-3 h-3 stroke-[3]" /> {lang === 'it' ? 'Attivo' : 'Active'}</>
                             ) : (
-                              <>
-                                To let the full-screen voice alarm appear even when locked, enable <strong className="text-purple-600 font-bold">"Display over other apps"</strong> or <strong className="text-purple-600 font-bold">"Show on lock screen"</strong>.
-                              </>
+                              lang === 'it' ? 'Da Attivare' : 'To Activate'
                             )}
-                          </p>
+                          </span>
                         </div>
+                        {renderPermissionButton(
+                          'battery_optimization',
+                          'amber',
+                          () => {
+                            const android = (window as any).Android;
+                            if (android) {
+                              if (typeof android.requestBatteryOptimizationDirect === 'function') {
+                                android.requestBatteryOptimizationDirect();
+                              } else if (typeof android.openBatteryOptimizationSettings === 'function') {
+                                android.openBatteryOptimizationSettings();
+                              }
+                            }
+                          },
+                          '⚡ Consenti a 1 Tocco (Senza Limiti)',
+                          '⚡ 1-Tap: Allow Unrestricted Battery',
+                          'Questo pulsante attiva direttamente il prompt di sistema di Android per consentire a Ricorda con Voce di rimanere sempre attiva.',
+                          'This button directly triggers Android system dialog to keep Ricorda con Voce unrestricted.',
+                          isBatteryGranted
+                        )}
                       </div>
-                      {renderPermissionButton(
-                        'overlay_permission',
-                        'purple',
-                        () => {
-                          const android = (window as any).Android;
-                          if (android && typeof android.openOverlaySettings === 'function') {
-                            android.openOverlaySettings();
-                          }
-                        },
-                        'Consenti Sopra Altre App',
-                        'Allow Display Over Other Apps',
-                        'Questo pulsante aprirà la schermata dei permessi speciali per "Visualizzare sopra altre app", essenziale per mostrare la schermata dell\'allarme vocale anche a telefono bloccato.',
-                        'This button will open the Android system menu for "Display over other apps", which is essential for rendering full-screen alerts when the phone is locked.'
-                      )}
-                    </div>
- 
-                    {/* Item 4 */}
-                    <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col gap-2">
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0 border border-emerald-100 text-xs font-extrabold">
-                          4
-                        </div>
-                        <div className="space-y-1 flex-1">
-                          <h3 className="font-extrabold text-xs sm:text-sm text-[#1E293B] flex items-center gap-1.5">
-                            <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                            {lang === 'it' ? 'Consenti Notifiche' : 'Allow Notifications'}
-                          </h3>
-                          <p className="text-[11px] sm:text-xs text-[#475569] leading-relaxed">
-                            {lang === 'it' ? (
-                              <>
-                                Al primo avvio, assicurati di <strong className="text-emerald-600 font-bold">accettare la richiesta di invio delle notifiche</strong> per essere avvisato tempestivamente.
-                              </>
+
+                      {/* Item 2: Notifiche di sistema (Direct native prompt) */}
+                      <div className={`p-3 rounded-xl border transition-all ${
+                        isNotificationsGranted 
+                          ? 'bg-emerald-50/50 border-emerald-200 shadow-xs' 
+                          : 'bg-white border-[#E2E8F0] shadow-sm'
+                      }`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex gap-2.5 flex-1">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border text-xs font-black ${
+                              isNotificationsGranted 
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                                : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                            }`}>
+                              {isNotificationsGranted ? <Check className="w-4 h-4 stroke-[3]" /> : '2'}
+                            </div>
+                            <div className="space-y-0.5 flex-1">
+                              <h3 className="font-extrabold text-xs text-[#1E293B] flex items-center gap-1.5">
+                                <Bell className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                {lang === 'it' ? 'Consenti Notifiche' : 'Allow Notifications'}
+                              </h3>
+                              <p className="text-[11px] text-[#475569] leading-tight">
+                                {lang === 'it'
+                                  ? "Consente gli avvisi sonori e le schede promemoria a comparsa."
+                                  : "Enables audio alerts and visual reminder banners."}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 flex items-center gap-1 ${
+                            isNotificationsGranted 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                              : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          }`}>
+                            {isNotificationsGranted ? (
+                              <><Check className="w-3 h-3 stroke-[3]" /> {lang === 'it' ? 'Attivo' : 'Active'}</>
                             ) : (
-                              <>
-                                Upon first launch, ensure you <strong className="text-emerald-600 font-bold">accept the push notification prompt</strong> to receive timely reminder alerts.
-                              </>
+                              lang === 'it' ? 'Da Attivare' : 'To Activate'
                             )}
-                          </p>
+                          </span>
                         </div>
+                        {renderPermissionButton(
+                          'notifications_permission',
+                          'emerald',
+                          () => {
+                            const android = (window as any).Android;
+                            if (android) {
+                              if (typeof android.requestNotificationPermission === 'function') {
+                                android.requestNotificationPermission();
+                              } else if (typeof android.openNotificationSettings === 'function') {
+                                android.openNotificationSettings();
+                              }
+                            }
+                          },
+                          '🔔 Consenti Notifiche',
+                          '🔔 Allow Notifications',
+                          'Questo pulsante richiede il permesso di notifica di Android.',
+                          'This button requests standard Android notification access.',
+                          isNotificationsGranted
+                        )}
                       </div>
-                      {renderPermissionButton(
-                        'notifications_permission',
-                        'emerald',
-                        () => {
-                          const android = (window as any).Android;
-                          if (android && typeof android.openNotificationSettings === 'function') {
-                            android.openNotificationSettings();
-                          }
-                        },
-                        'Attiva Notifiche di Sistema',
-                        'Enable System Notifications',
-                        'Questo pulsante aprirà le impostazioni delle notifiche di sistema di Android per assicurarti che Ricorda con Voce possa inviarti gli allarmi quotidiani.',
-                        'This button will open the standard Android Notification settings for Ricorda con Voce, ensuring the system registers and fires audio notifications correctly.'
-                      )}
+
+                      {/* Item 3: Sveglie Precise */}
+                      <div className={`p-3 rounded-xl border transition-all ${
+                        isExactAlarmsGranted 
+                          ? 'bg-emerald-50/50 border-emerald-200 shadow-xs' 
+                          : 'bg-white border-[#E2E8F0] shadow-sm'
+                      }`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex gap-2.5 flex-1">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border text-xs font-black ${
+                              isExactAlarmsGranted 
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                                : 'bg-blue-50 text-blue-600 border-blue-200'
+                            }`}>
+                              {isExactAlarmsGranted ? <Check className="w-4 h-4 stroke-[3]" /> : '3'}
+                            </div>
+                            <div className="space-y-0.5 flex-1">
+                              <h3 className="font-extrabold text-xs text-[#1E293B] flex items-center gap-1.5">
+                                <Bell className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                                {lang === 'it' ? 'Sveglie e Promemoria Precisi' : 'Precise Alarms & Reminders'}
+                              </h3>
+                              <p className="text-[11px] text-[#475569] leading-tight">
+                                {lang === 'it'
+                                  ? "Garantisce che l'allarme scatti al minuto esatto impostato."
+                                  : "Ensures alarms fire at the exact minute scheduled."}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 flex items-center gap-1 ${
+                            isExactAlarmsGranted 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                              : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          }`}>
+                            {isExactAlarmsGranted ? (
+                              <><Check className="w-3 h-3 stroke-[3]" /> {lang === 'it' ? 'Attivo' : 'Active'}</>
+                            ) : (
+                              lang === 'it' ? 'Da Attivare' : 'To Activate'
+                            )}
+                          </span>
+                        </div>
+                        {renderPermissionButton(
+                          'precise_alarms',
+                          'blue',
+                          () => {
+                            const android = (window as any).Android;
+                            if (android && typeof android.openExactAlarmSettings === 'function') {
+                              android.openExactAlarmSettings();
+                            }
+                          },
+                          '⏰ Attiva Sveglie Precise',
+                          '⏰ Enable Precise Alarms',
+                          'Apre la sezione "Sveglie e promemoria" di Android per garantire precisione temporale assoluta.',
+                          'Opens the Android Alarms & Reminders menu for high precision.',
+                          isExactAlarmsGranted
+                        )}
+                      </div>
+
+                      {/* Item 4: Schermo Intero / Sopra altre app (Oppo, Xiaomi, Realme, Samsung) */}
+                      <div className={`p-3 rounded-xl border transition-all ${
+                        isOverlayGranted 
+                          ? 'bg-emerald-50/50 border-emerald-200 shadow-xs' 
+                          : 'bg-white border-[#E2E8F0] shadow-sm'
+                      }`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex gap-2.5 flex-1">
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border text-xs font-black ${
+                              isOverlayGranted 
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                                : 'bg-purple-50 text-purple-600 border-purple-200'
+                            }`}>
+                              {isOverlayGranted ? <Check className="w-4 h-4 stroke-[3]" /> : '4'}
+                            </div>
+                            <div className="space-y-0.5 flex-1">
+                              <h3 className="font-extrabold text-xs text-[#1E293B] flex items-center gap-1.5">
+                                <Eye className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                                {lang === 'it' ? 'Schermo Intero a Telefono Bloccato' : 'Full Screen on Lock Screen'}
+                              </h3>
+                              <p className="text-[11px] text-[#475569] leading-tight">
+                                {lang === 'it'
+                                  ? "Consente all'allarme di apparire a tutto schermo quando il display è spento o bloccato (essenziale per Oppo, Xiaomi, Realme)."
+                                  : "Allows alarms to pop up full-screen over the lock screen (essential on Oppo, Xiaomi, Realme)."}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 flex items-center gap-1 ${
+                            isOverlayGranted 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                              : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          }`}>
+                            {isOverlayGranted ? (
+                              <><Check className="w-3 h-3 stroke-[3]" /> {lang === 'it' ? 'Attivo' : 'Active'}</>
+                            ) : (
+                              lang === 'it' ? 'Da Attivare' : 'To Activate'
+                            )}
+                          </span>
+                        </div>
+                        {renderPermissionButton(
+                          'oppo_fullscreen',
+                          'purple',
+                          () => {
+                            const android = (window as any).Android;
+                            if (android && typeof android.openFullScreenIntentSettings === 'function') {
+                              android.openFullScreenIntentSettings();
+                            } else if (android && typeof android.openOverlaySettings === 'function') {
+                              android.openOverlaySettings();
+                            }
+                          },
+                          '📱 Consenti a Schermo Intero',
+                          '📱 Allow Full Screen Alarm',
+                          'Apre la sezione delle notifiche a schermo intero o sovrapposizione su altre app.',
+                          'Opens full-screen / display over other apps settings.',
+                          isOverlayGranted
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                );
+              })()}
             </AnimatePresence>
           </main>
         </div>

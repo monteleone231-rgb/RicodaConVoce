@@ -174,10 +174,8 @@ class ReminderAlertService : Service(), TextToSpeech.OnInitListener {
             context = this,
             id = currentAlarmId,
             medName = reminderName,
-            voicePrompt = voicePrompt,
             dosage = dosage,
             timeSlot = timeSlot,
-            customVoicePath = customVoicePath,
             snoozeMinutes = AlarmReceiver.AUTO_SNOOZE_CALL_MINUTES
         )
         val autoSnoozeMillis = System.currentTimeMillis() + AlarmReceiver.AUTO_SNOOZE_CALL_MINUTES * 60 * 1000L

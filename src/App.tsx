@@ -766,6 +766,15 @@ export default function App() {
                console.error(`[RicordaConVoce] Error scheduling slot ${med.name} at ${timeSlot}:`, e);
              }
            });
+
+           // Explicitly cancel any previously active trailing slots if user reduced the number of times (e.g. from 3 to 1)
+           for (let idx = medTimes.length; idx < 10; idx++) {
+             try {
+               android.cancelAlarm(nativeId + idx);
+             } catch (e) {
+               // ignore
+             }
+           }
          } else {
            // Cancel active slot alarms
            for (let idx = 0; idx < 10; idx++) {
@@ -1033,14 +1042,17 @@ export default function App() {
     const medToDelete = medications.find(m => m.id === id);
     if (medToDelete) {
       const android = (window as any).Android;
-      if (android) {
-        const nativeId = medToDelete.nativeId || Math.floor(Math.random() * 10000000);
-        try {
-          android.cancelAlarm(nativeId);
-          console.log(`[RicordaConVoce] Cancelled native alarm for ${medToDelete.name} on deletion.`);
-        } catch (e) {
-          console.error("Error cancelling native alarm on deletion:", e);
+      if (android && medToDelete.nativeId) {
+        const nativeId = medToDelete.nativeId;
+        // Cancel all potential slots (0 through 9) to ensure no orphan alarms remain in Android system
+        for (let idx = 0; idx < 10; idx++) {
+          try {
+            android.cancelAlarm(nativeId + idx);
+          } catch (e) {
+            // ignore
+          }
         }
+        console.log(`[RicordaConVoce] Cancelled all native alarm slots for ${medToDelete.name} on deletion.`);
       }
     }
     setMedications(prev => prev.filter(m => m.id !== id));

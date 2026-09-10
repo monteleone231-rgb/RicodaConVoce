@@ -9,6 +9,8 @@
 
     <!-- SCHEDULE_EXACT_ALARM (Android 12/13+): Required for exact scheduling. Checked at runtime. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- REQUEST_IGNORE_BATTERY_OPTIMIZATIONS: Prompts user directly with 1-tap system dialog to exclude from Doze -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- WAKE_LOCK: Required to wake the CPU and keep it active while triggers boot -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />

@@ -38,28 +38,33 @@ class AlarmScheduler(private val context: Context) {
         )
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        timeMillis,
-                        pendingIntent
-                    )
-                } else {
-                    alarmManager.setAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        timeMillis,
-                        pendingIntent
-                    )
-                }
-            } else {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    timeMillis,
-                    pendingIntent
-                )
+            // Intent to open the app if user taps on the system clock or alarm indicator
+            val showIntent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
-            Log.d("AlarmScheduler", "Scheduled alarm for $name (ID: $id) at $timeMillis")
+            val showPendingIntent = PendingIntent.getActivity(
+                context,
+                id,
+                showIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            // setAlarmClock guarantees to fire at the exact minute even under deep Doze mode
+            // and aggressive OEM battery savers (Samsung, Xiaomi, Huawei, etc.)
+            val alarmClockInfo = AlarmManager.AlarmClockInfo(timeMillis, showPendingIntent)
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+            Log.d("AlarmScheduler", "Scheduled high-priority alarm clock for $name (ID: $id) at $timeMillis")
+        } catch (e: SecurityException) {
+            Log.w("AlarmScheduler", "setAlarmClock security exception, falling back to setExactAndAllowWhileIdle", e)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent)
+                } else {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent)
+                }
+            } catch (fallbackEx: Exception) {
+                Log.e("AlarmScheduler", "Failed fallback alarm scheduling", fallbackEx)
+            }
         } catch (e: Exception) {
             Log.e("AlarmScheduler", "Failed to schedule alarm", e)
         }
