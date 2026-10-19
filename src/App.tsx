@@ -9,7 +9,8 @@ import {
   Heart, Plus, BellRing, AlarmClock, ClipboardList, CheckSquare, Award, Globe, MapPin, 
   Settings, CheckCircle, Volume2, 
   AlertTriangle, Mic, Clock, Camera, Calendar, 
-  Smartphone, Bell, Sparkles, Phone, FileText, ChevronRight, ChevronDown, Coffee, Search
+  Smartphone, Bell, Sparkles, Phone, FileText, ChevronRight, ChevronDown, Coffee, Search,
+  Download, Upload, Star, Share2, HardDrive, FileCheck
 } from 'lucide-react';
 // Custom lightweight SVG country flags (100% React 19 compatible, zero external legacy bundler issues)
 const IT = ({ className = "w-4 h-3 inline-block rounded-xs overflow-hidden shadow-2xs" }: { className?: string }) => (
@@ -428,6 +429,31 @@ export default function App() {
   const [speechConfirmError, setSpeechConfirmError] = useState<string>('');
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [showDevDocs, setShowDevDocs] = useState<boolean>(false);
+
+  // Nuove funzionalità v1.0.6
+  // 1. Sveglia & Allarme Parlante
+  const [speechOnRingEnabled, setSpeechOnRingEnabled] = useState<boolean>(() => {
+    return getStorage('ricordaconvoce_speech_on_ring', 'medivoce_speech_on_ring') !== 'false'; // true by default
+  });
+
+  // 2. Backup & Ripristino Sicuro
+  const backupInputRef = useRef<HTMLInputElement>(null);
+  const [backupRestorePreview, setBackupRestorePreview] = useState<{
+    exportDate?: string;
+    version?: string;
+    medicationsCount: number;
+    voiceStudioCount: number;
+    notesCount: number;
+    rawBackup: any;
+  } | null>(null);
+  const [backupToast, setBackupToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // 3. Dialogo Recensioni In-App Google Play
+  const [showRateModal, setShowRateModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    localStorage.setItem('ricordaconvoce_speech_on_ring', speechOnRingEnabled.toString());
+  }, [speechOnRingEnabled]);
 
   useEffect(() => {
     if (showImportSoundsModal) {
@@ -1075,6 +1101,219 @@ export default function App() {
     });
   };
 
+  // --- NUOVE FUNZIONALITÀ v1.0.6: RECENSIONI GOOGLE PLAY & BACKUP/RESTORE ---
+  const openPlayStoreReview = () => {
+    localStorage.setItem('ricordaconvoce_review_status', 'rated');
+    setShowRateModal(false);
+    const packageName = 'com.ricordaconvove';
+    const marketUri = `market://details?id=${packageName}`;
+    const webUri = `https://play.google.com/store/apps/details?id=${packageName}`;
+    try {
+      window.location.href = marketUri;
+      setTimeout(() => {
+        window.open(webUri, '_blank');
+      }, 600);
+    } catch (_e) {
+      window.open(webUri, '_blank');
+    }
+  };
+
+  const handleRateLater = () => {
+    // Posticipa di 5 giorni
+    const nextTime = Date.now() + 5 * 24 * 60 * 60 * 1000;
+    localStorage.setItem('ricordaconvoce_review_remind_until', nextTime.toString());
+    setShowRateModal(false);
+  };
+
+  const handleRateNever = () => {
+    localStorage.setItem('ricordaconvoce_review_status', 'never');
+    setShowRateModal(false);
+  };
+
+  const checkAndTriggerReviewModal = () => {
+    const currentStatus = localStorage.getItem('ricordaconvoce_review_status');
+    if (currentStatus === 'rated' || currentStatus === 'never') return;
+    const remindLaterUntil = localStorage.getItem('ricordaconvoce_review_remind_until');
+    if (remindLaterUntil && Date.now() < parseInt(remindLaterUntil, 10)) return;
+
+    const currentActions = parseInt(localStorage.getItem('ricordaconvoce_usage_actions') || '0', 10) + 1;
+    localStorage.setItem('ricordaconvoce_usage_actions', currentActions.toString());
+
+    // Mostra il dialogo empatico dopo 3 azioni riuscite
+    if (currentActions >= 3) {
+      setTimeout(() => {
+        setShowRateModal(true);
+      }, 1200);
+    }
+  };
+
+  // Esportazione Backup su Google Drive / Condivisione o Download File
+  const handleExportBackup = async () => {
+    try {
+      const voiceStudioItems = JSON.parse(localStorage.getItem('ricordaconvoce_voice_studio_items') || '[]');
+      const backupData = {
+        appName: "Ricorda con Voce",
+        appPackage: "com.ricordaconvove",
+        version: "1.0.6",
+        exportDate: new Date().toISOString(),
+        medications: medications,
+        customSounds: importedSounds,
+        voiceStudioItems: voiceStudioItems,
+        doctorNotes: notes,
+        settings: {
+          lang,
+          appTheme,
+          colorTheme,
+          vibrationEnabled,
+          alwaysOnDisplay,
+          voiceAnnounceEnabled,
+          speechOnRingEnabled,
+          speechSpeed,
+          speechTone,
+          emergencyPhone
+        }
+      };
+
+      const jsonString = JSON.stringify(backupData, null, 2);
+      const todayIso = getLocalIsoDate();
+      const fileName = `ricorda-con-voce-backup-${todayIso}.json`;
+
+      // 1. Prova Web Share API di Android per inviare direttamente a Google Drive, WhatsApp, Gmail
+      const file = new File([jsonString], fileName, { type: 'application/json' });
+      if (typeof navigator !== 'undefined' && (navigator as any).canShare && (navigator as any).canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: 'Backup Ricorda con Voce',
+            text: lang === 'it' 
+              ? 'Backup sicuro dei tuoi promemoria e note vocali.' 
+              : 'Secure backup of your voice reminders and routines.',
+            files: [file]
+          });
+          setBackupToast({ message: t.backupExportSuccess, type: 'success' });
+          setTimeout(() => setBackupToast(null), 4000);
+          return;
+        } catch (shareErr: any) {
+          if (shareErr.name === 'AbortError') {
+            return;
+          }
+        }
+      }
+
+      // 2. Download diretto se la condivisione non è supportata o viene annullata
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setBackupToast({ message: t.backupExportSuccess, type: 'success' });
+      setTimeout(() => setBackupToast(null), 4000);
+      playAlarmTone('preset_trillo');
+    } catch (err) {
+      console.error("[RicordaConVoce] Backup export failed:", err);
+      setBackupToast({ message: "Errore durante l'esportazione del backup.", type: 'error' });
+      setTimeout(() => setBackupToast(null), 4000);
+    }
+  };
+
+  // Gestione selezione file per Ripristino
+  const handleRestoreFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const parsed = JSON.parse(text);
+
+        if (!parsed || (typeof parsed !== 'object')) {
+          throw new Error("Invalid format");
+        }
+
+        const medsList = Array.isArray(parsed.medications) ? parsed.medications : [];
+        const voicesList = Array.isArray(parsed.voiceStudioItems) ? parsed.voiceStudioItems : [];
+        const notesList = Array.isArray(parsed.doctorNotes) ? parsed.doctorNotes : [];
+
+        if (medsList.length === 0 && voicesList.length === 0 && notesList.length === 0 && !parsed.settings) {
+          throw new Error("No data in backup");
+        }
+
+        setBackupRestorePreview({
+          exportDate: parsed.exportDate,
+          version: parsed.version || '1.0',
+          medicationsCount: medsList.length,
+          voiceStudioCount: voicesList.length,
+          notesCount: notesList.length,
+          rawBackup: parsed
+        });
+      } catch (err) {
+        console.error("[RicordaConVoce] Failed to parse backup file:", err);
+        setBackupToast({ message: t.backupRestoreInvalid, type: 'error' });
+        setTimeout(() => setBackupToast(null), 4000);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  // Conferma e applicazione del ripristino
+  const handleConfirmRestore = () => {
+    if (!backupRestorePreview) return;
+    const data = backupRestorePreview.rawBackup;
+
+    try {
+      if (Array.isArray(data.medications)) {
+        setMedications(data.medications);
+        localStorage.setItem('ricordaconvoce_reminders', JSON.stringify(data.medications));
+        localStorage.setItem('ricordaconvoce_meds', JSON.stringify(data.medications));
+      }
+
+      if (Array.isArray(data.voiceStudioItems)) {
+        localStorage.setItem('ricordaconvoce_voice_studio_items', JSON.stringify(data.voiceStudioItems));
+      }
+
+      if (Array.isArray(data.customSounds)) {
+        setImportedSounds(data.customSounds);
+        localStorage.setItem('ricordaconvoce_custom_sounds', JSON.stringify(data.customSounds));
+      }
+
+      if (Array.isArray(data.doctorNotes)) {
+        setNotes(data.doctorNotes);
+        localStorage.setItem('ricordaconvoce_notes', JSON.stringify(data.doctorNotes));
+      }
+
+      if (data.settings && typeof data.settings === 'object') {
+        const s = data.settings;
+        if (s.appTheme) setAppTheme(s.appTheme);
+        if (s.colorTheme) setColorTheme(s.colorTheme);
+        if (typeof s.vibrationEnabled === 'boolean') setVibrationEnabled(s.vibrationEnabled);
+        if (typeof s.alwaysOnDisplay === 'boolean') setAlwaysOnDisplay(s.alwaysOnDisplay);
+        if (typeof s.voiceAnnounceEnabled === 'boolean') setVoiceAnnounceEnabled(s.voiceAnnounceEnabled);
+        if (typeof s.speechOnRingEnabled === 'boolean') setSpeechOnRingEnabled(s.speechOnRingEnabled);
+        if (typeof s.speechSpeed === 'number') setSpeechSpeed(s.speechSpeed);
+        if (s.speechTone) setSpeechTone(s.speechTone);
+        if (s.emergencyPhone) {
+          setEmergencyPhone(s.emergencyPhone);
+          localStorage.setItem('ricordaconvoce_emergency_number', s.emergencyPhone);
+        }
+      }
+
+      setBackupRestorePreview(null);
+      setBackupToast({ message: t.backupRestoreSuccess, type: 'success' });
+      setTimeout(() => setBackupToast(null), 4500);
+      playAlarmTone('preset_trillo');
+    } catch (err) {
+      console.error("[RicordaConVoce] Error applying restore:", err);
+      setBackupToast({ message: t.backupRestoreInvalid, type: 'error' });
+      setTimeout(() => setBackupToast(null), 4000);
+    }
+  };
+
   // Toggles the state of taken vs skipped pill for CURRENT calendar date and specific time slot
   const toggleTakenStatusForSlot = (med: Medication, timeSlot?: string | null) => {
     const todayStr = getLocalIsoDate();
@@ -1133,6 +1372,9 @@ export default function App() {
           // Play a delightful micro sound confirming action
           playAlarmTone('preset_trillo');
           
+          // Verifica se è il momento di proporre con empatia una recensione a 5 stelle
+          checkAndTriggerReviewModal();
+          
           // Speak kind confirmation phrase for sensory reinforcement
           const confirmationSpeech = lang === 'it' 
             ? "Grazie, ho registrato che hai preso la medicina. Bravissimo!" 
@@ -1189,7 +1431,40 @@ export default function App() {
     triggerDeviceVibration([500, 200, 500, 200, 1000]);
     
     // Speak custom customized script with TTS or play user's recorded voice if enabled
-    if (voiceAnnounceEnabled) {
+    if (speechOnRingEnabled) {
+      let announcement = "";
+      if (lang === 'it') {
+        announcement = `Attenzione, sono le ${actualSlot}! Promemoria: ${med.name}. ${med.dosage ? med.dosage + '.' : ''} ${med.notes ? med.notes + '.' : ''}`.trim();
+      } else if (lang === 'es') {
+        announcement = `¡Atención, son las ${actualSlot}! Recordatorio: ${med.name}. ${med.dosage || ''}. ${med.notes || ''}`.trim();
+      } else if (lang === 'fr') {
+        announcement = `Attention, il est ${actualSlot} ! Rappel : ${med.name}. ${med.dosage || ''}. ${med.notes || ''}`.trim();
+      } else if (lang === 'de') {
+        announcement = `Achtung, es ist ${actualSlot} Uhr! Erinnerung: ${med.name}. ${med.dosage || ''}. ${med.notes || ''}`.trim();
+      } else {
+        announcement = `Attention, it is ${actualSlot}! Reminder: ${med.name}. ${med.dosage || ''}. ${med.notes || ''}`.trim();
+      }
+
+      if (med.stockCurrent !== undefined && med.stockCurrent <= (med.stockMin || 5)) {
+        const stockAlertMsg = lang === 'it' 
+          ? ` Attenzione, la scorta sta per esaurirsi. Rimangono solo ${med.stockCurrent} dosi.` 
+          : ` Warning, stock is running low. Only ${med.stockCurrent} remaining.`;
+        announcement = `${announcement} ${stockAlertMsg}`;
+      }
+
+      setTimeout(() => {
+        speakAnnouncement(announcement, lang, speechSpeed, speechTone);
+      }, 50);
+
+      // If user has recorded a personalized voice memo, play it after the spoken time prompt
+      if (med.customVoiceUri) {
+        const wordsCount = announcement.split(/\s+/).length;
+        const delayMs = Math.max(3200, (wordsCount / (1.5 * speechSpeed)) * 1000);
+        setTimeout(() => {
+          playVoiceAudio(med.customVoiceUri!);
+        }, delayMs);
+      }
+    } else if (voiceAnnounceEnabled) {
       if (med.customVoiceUri) {
         setTimeout(() => {
           playVoiceAudio(med.customVoiceUri!);
@@ -2566,6 +2841,42 @@ export default function App() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Speech on Ring Toggle (Nuova Feature v1.0.6) */}
+                  <div className="flex flex-col gap-2 pt-2.5 w-full border-t border-[#F1F5F9]">
+                    <div className="flex items-center justify-between gap-3 w-full">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <span className={`text-sm font-bold block break-words [overflow-wrap:anywhere] [hyphens:auto] leading-snug ${appTheme === 'dark' ? 'text-white' : 'text-slate-700'}`}>
+                          🗣️ {t.speechOnRingTitle}
+                        </span>
+                        <span className="text-2xs text-slate-500 font-medium block mt-0.5 leading-snug">
+                          {t.speechOnRingDesc}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5 shrink-0 flex-shrink-0">
+                        <button 
+                          id="toggle-speech-on-ring"
+                          type="button"
+                          onClick={() => setSpeechOnRingEnabled(!speechOnRingEnabled)}
+                          className={`relative inline-flex h-5.5 w-10 shrink-0 flex-shrink-0 min-w-[40px] items-center rounded-full transition-colors cursor-pointer focus:outline-none ${speechOnRingEnabled ? theme.primary : 'bg-[#333]'}`}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${speechOnRingEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
+                    </div>
+                    {speechOnRingEnabled && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          speakAnnouncement(t.speechOnRingTestVoice, lang, speechSpeed, speechTone);
+                        }}
+                        className="w-full py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[#2563EB] font-bold text-xs flex items-center justify-center gap-2 transition-colors active:scale-98"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" />
+                        <span>{t.speechOnRingTestBtn}</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* EMERGENCY CONTACT SECTION */}
@@ -2601,6 +2912,86 @@ export default function App() {
                         <span>{t.callNow}</span>
                       </a>
                     )}
+                  </div>
+                </div>
+
+                {/* GOOGLE PLAY REVIEW BLOCK (v1.0.6) */}
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 p-5 rounded-3xl border border-amber-200 text-left space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-5 h-5 text-amber-500 fill-amber-400" />
+                      <h3 className="text-lg font-extrabold text-amber-900">
+                        {t.rateAppTitle}
+                      </h3>
+                    </div>
+                    <div className="flex text-amber-400 text-sm">
+                      {"★★★★★"}
+                    </div>
+                  </div>
+                  <div className="text-xs text-amber-900/80 font-medium leading-relaxed">
+                    {t.rateAppDesc}
+                  </div>
+                  <button
+                    id="open-google-play-review-btn"
+                    onClick={openPlayStoreReview}
+                    className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer"
+                  >
+                    <Star className="w-4 h-4 fill-white" />
+                    <span>{t.rateAppBtn}</span>
+                  </button>
+                </div>
+
+                {/* SECURE BACKUP & RESTORE BLOCK (v1.0.6) */}
+                <div className="bg-white p-5 rounded-3xl border border-slate-200 text-left space-y-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center border border-blue-100">
+                        <HardDrive className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-extrabold text-slate-800">
+                          {t.backupSectionTitle}
+                        </h3>
+                        <p className="text-3xs text-slate-400 font-bold uppercase tracking-wider">
+                          Google Drive &middot; File &middot; WhatsApp
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-slate-600 font-medium leading-relaxed">
+                    {t.backupSectionDesc}
+                  </div>
+
+                  {/* Hidden file input for restore */}
+                  <input
+                    ref={backupInputRef}
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={handleRestoreFileSelected}
+                    className="hidden"
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    <button
+                      id="export-backup-btn"
+                      type="button"
+                      onClick={handleExportBackup}
+                      className="py-3 px-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition-all active:scale-98 cursor-pointer"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      <span>{t.backupExportBtn}</span>
+                    </button>
+
+                    <button
+                      id="restore-backup-btn"
+                      type="button"
+                      onClick={() => backupInputRef.current?.click()}
+                      className="py-3 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 font-extrabold text-xs flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
+                    >
+                      <Upload className="w-4 h-4 text-slate-600" />
+                      <span>{t.backupRestoreBtn}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -3466,6 +3857,203 @@ export default function App() {
           speechSpeed={speechSpeed}
           speechTone={speechTone}
         />
+
+        {/* MODAL: BACKUP RESTORE CONFIRMATION PREVIEW (v1.0.6) */}
+        <AnimatePresence>
+          {backupRestorePreview && (
+            <motion.div
+              id="backup-restore-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-2xs"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 border border-slate-100 shadow-2xl text-left"
+              >
+                <div className="flex items-center gap-3 pb-2 border-b border-slate-100">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center shrink-0 border border-blue-100">
+                    <FileCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-800 leading-tight">
+                      {t.backupRestoreConfirmTitle}
+                    </h3>
+                    <p className="text-3xs text-slate-400 font-bold uppercase tracking-wider">
+                      {backupRestorePreview.exportDate ? new Date(backupRestorePreview.exportDate).toLocaleDateString() : 'Backup'} &middot; v{backupRestorePreview.version}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                  {t.backupRestoreConfirmText}
+                </p>
+
+                {/* Backup Summary Stats */}
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span className="flex items-center gap-1.5">
+                      <span>⏰</span>
+                      <span>{lang === 'it' ? "Promemoria & Sveglie" : "Reminders & Alarms"}</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-blue-100 text-[#1E40AF] font-extrabold text-3xs">
+                      {backupRestorePreview.medicationsCount}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span className="flex items-center gap-1.5">
+                      <span>🎙️</span>
+                      <span>{lang === 'it' ? "Voci Personali & Audio" : "Voice Recordings"}</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 font-extrabold text-3xs">
+                      {backupRestorePreview.voiceStudioCount}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span className="flex items-center gap-1.5">
+                      <span>📝</span>
+                      <span>{lang === 'it' ? "Note & Impostazioni" : "Notes & Settings"}</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 font-extrabold text-3xs">
+                      {lang === 'it' ? "Presenti ✓" : "Included ✓"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <button
+                    id="confirm-restore-btn"
+                    type="button"
+                    onClick={handleConfirmRestore}
+                    className="w-full py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 cursor-pointer"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    <span>{lang === 'it' ? "Sì, Ripristina Ora" : "Yes, Restore Now"}</span>
+                  </button>
+
+                  <button
+                    id="cancel-restore-btn"
+                    type="button"
+                    onClick={() => setBackupRestorePreview(null)}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    {lang === 'it' ? "Annulla" : "Cancel"}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* EMPATHETIC IN-APP GOOGLE PLAY REVIEW MODAL (v1.0.6) */}
+        <AnimatePresence>
+          {showRateModal && (
+            <motion.div
+              id="google-play-rate-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-2xs"
+            >
+              <motion.div
+                initial={{ y: 80, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 80, opacity: 0 }}
+                className="bg-white rounded-t-[36px] sm:rounded-3xl w-full max-w-sm p-6 space-y-4 border border-amber-200 shadow-2xl text-center"
+              >
+                {/* 5 Golden Stars animation */}
+                <div className="flex justify-center items-center gap-1.5 pt-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <motion.div
+                      key={star}
+                      initial={{ scale: 0.6, rotate: -20 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: star * 0.08, type: "spring", stiffness: 300 }}
+                    >
+                      <Star className="w-8 h-8 text-amber-400 fill-amber-400 drop-shadow-sm" />
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="space-y-1.5">
+                  <h3 className="text-xl font-black text-slate-800 leading-tight">
+                    {t.rateModalTitle}
+                  </h3>
+                  <p className="text-xs text-slate-600 font-medium leading-relaxed px-1">
+                    {t.rateModalSubtitle}
+                  </p>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <button
+                    id="rate-modal-confirm-btn"
+                    type="button"
+                    onClick={openPlayStoreReview}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/25 transition-all active:scale-98 cursor-pointer"
+                  >
+                    <Star className="w-4 h-4 fill-white" />
+                    <span>{t.rateModalYesBtn}</span>
+                  </button>
+
+                  <button
+                    id="rate-modal-later-btn"
+                    type="button"
+                    onClick={handleRateLater}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    {t.rateModalLaterBtn}
+                  </button>
+
+                  <button
+                    id="rate-modal-never-btn"
+                    type="button"
+                    onClick={handleRateNever}
+                    className="w-full py-1.5 text-3xs text-slate-400 hover:text-slate-600 font-bold tracking-wide transition-colors cursor-pointer"
+                  >
+                    {lang === 'it' ? "Non mostrare più" : "Don't ask again"}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* FLOATING FEEDBACK TOAST */}
+        <AnimatePresence>
+          {backupToast && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className={`absolute top-4 inset-x-4 z-50 p-3.5 rounded-2xl shadow-xl flex items-center gap-3 border ${
+                backupToast.type === 'success' 
+                  ? 'bg-emerald-600 text-white border-emerald-500' 
+                  : 'bg-rose-600 text-white border-rose-500'
+              }`}
+            >
+              {backupToast.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 shrink-0" />
+              ) : (
+                <AlertTriangle className="w-5 h-5 shrink-0" />
+              )}
+              <span className="text-xs font-bold leading-snug flex-1">
+                {backupToast.message}
+              </span>
+              <button
+                type="button"
+                onClick={() => setBackupToast(null)}
+                className="text-white/80 hover:text-white font-black text-sm p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
 

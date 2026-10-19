@@ -255,6 +255,27 @@ export const TRANSLATIONS: Record<LanguageCode, {
   voiceStudioLinkedTo: string;
   voiceStudioSavedAndLinked: string;
   voiceStudioOpenSettings: string;
+  // Nuove funzionalità v1.0.6
+  speechOnRingTitle: string;
+  speechOnRingDesc: string;
+  speechOnRingTestBtn: string;
+  speechOnRingTestVoice: string;
+  backupSectionTitle: string;
+  backupSectionDesc: string;
+  backupExportBtn: string;
+  backupExportSuccess: string;
+  backupRestoreBtn: string;
+  backupRestoreConfirmTitle: string;
+  backupRestoreConfirmText: string;
+  backupRestoreSuccess: string;
+  backupRestoreInvalid: string;
+  rateAppTitle: string;
+  rateAppDesc: string;
+  rateAppBtn: string;
+  rateModalTitle: string;
+  rateModalSubtitle: string;
+  rateModalYesBtn: string;
+  rateModalLaterBtn: string;
 }> = {
   it: {
     appName: "Ricorda con Voce",
@@ -466,6 +487,27 @@ export const TRANSLATIONS: Record<LanguageCode, {
     voiceStudioLinkedTo: "collegata a",
     voiceStudioSavedAndLinked: "Voce salvata e collegata a",
     voiceStudioOpenSettings: "Apri Impostazioni App",
+    // Nuove funzionalità v1.0.6
+    speechOnRingTitle: "Sveglia e Allarme Parlante",
+    speechOnRingDesc: "Quando suona l'allarme, pronuncia chiaramente l'orario e il promemoria ad alta voce.",
+    speechOnRingTestBtn: "Ascolta Esempio Sveglia Parlante",
+    speechOnRingTestVoice: "Attenzione, sono le 08:30! Promemoria: Ricordati di fare la passeggiata mattutina.",
+    backupSectionTitle: "Backup e Salvataggio Sicuro",
+    backupSectionDesc: "Esporta tutti i tuoi promemoria, note e voci su Google Drive o nei file per non perdere mai nulla se cambi telefono.",
+    backupExportBtn: "Esporta Backup (Drive / Condividi)",
+    backupExportSuccess: "Backup esportato con successo!",
+    backupRestoreBtn: "Ripristina da File Backup",
+    backupRestoreConfirmTitle: "Ripristinare questo Backup?",
+    backupRestoreConfirmText: "Trovati promemoria salvati. Vuoi caricarli nell'applicazione?",
+    backupRestoreSuccess: "Tutti i tuoi promemoria e le voci sono stati ripristinati con successo!",
+    backupRestoreInvalid: "File di backup non valido o danneggiato.",
+    rateAppTitle: "Ti piace Ricorda con Voce?",
+    rateAppDesc: "Aiutaci a far conoscere l'app lasciando una recensione a 5 stelle su Google Play!",
+    rateAppBtn: "Valuta l'App su Google Play ⭐",
+    rateModalTitle: "Ti trovi bene con Ricorda con Voce?",
+    rateModalSubtitle: "Il tuo supporto è prezioso per uno sviluppatore indipendente. Se Ricorda con Voce ti è utile ogni giorno, ci daresti una mano con 5 stelle su Google Play?",
+    rateModalYesBtn: "Sì, lascia 5 stelle ⭐⭐⭐⭐⭐",
+    rateModalLaterBtn: "Ricordamelo più tardi",
   },
   en: {
     appName: "Ricorda con Voce",
@@ -677,6 +719,27 @@ export const TRANSLATIONS: Record<LanguageCode, {
     voiceStudioLinkedTo: "linked to",
     voiceStudioSavedAndLinked: "Voice saved and linked to",
     voiceStudioOpenSettings: "Open App Settings",
+    // Nuove funzionalità v1.0.6
+    speechOnRingTitle: "Talking Alarm & Clock",
+    speechOnRingDesc: "When the alarm rings, clearly announces the current time and reminder name aloud.",
+    speechOnRingTestBtn: "Listen to Talking Alarm Preview",
+    speechOnRingTestVoice: "Attention, it is 8:30 AM! Reminder: Remember to take your morning walk.",
+    backupSectionTitle: "Secure Backup & Restore",
+    backupSectionDesc: "Export all your reminders, notes, and voices to Google Drive or files so you never lose anything when switching phones.",
+    backupExportBtn: "Export Backup (Drive / Share)",
+    backupExportSuccess: "Backup exported successfully!",
+    backupRestoreBtn: "Restore from Backup File",
+    backupRestoreConfirmTitle: "Restore this Backup?",
+    backupRestoreConfirmText: "Found saved reminders. Do you want to load them into the application?",
+    backupRestoreSuccess: "All your reminders and voices have been restored successfully!",
+    backupRestoreInvalid: "Invalid or corrupted backup file.",
+    rateAppTitle: "Enjoying Ricorda con Voce?",
+    rateAppDesc: "Help others discover this app by leaving a 5-star review on Google Play!",
+    rateAppBtn: "Rate on Google Play ⭐",
+    rateModalTitle: "Enjoying Ricorda con Voce?",
+    rateModalSubtitle: "Your support makes a huge difference for an independent developer. If this app helps your daily routine, would you leave us a 5-star rating on Google Play?",
+    rateModalYesBtn: "Yes, rate 5 stars ⭐⭐⭐⭐⭐",
+    rateModalLaterBtn: "Remind me later",
   },
   es: {
     appName: "Ricorda con Voce",
@@ -888,6 +951,27 @@ export const TRANSLATIONS: Record<LanguageCode, {
     voiceStudioLinkedTo: "vinculada a",
     voiceStudioSavedAndLinked: "Voz guardada y vinculada a",
     voiceStudioOpenSettings: "Abrir Ajustes de la App",
+    // Nuove funzionalità v1.0.6
+    speechOnRingTitle: "Alarma y Reloj Parlante",
+    speechOnRingDesc: "Cuando suena la alarma, pronuncia claramente la hora y el recordatorio en voz alta.",
+    speechOnRingTestBtn: "Escuchar Ejemplo Alarma Parlante",
+    speechOnRingTestVoice: "¡Atención, son las 08:30! Recordatorio: Recuerda dar tu paseo matutino.",
+    backupSectionTitle: "Copia de Seguridad y Restauración",
+    backupSectionDesc: "Exporta todos tus recordatorios, notas y voces a Google Drive o archivos para no perder nada si cambias de móvil.",
+    backupExportBtn: "Exportar Copia (Drive / Compartir)",
+    backupExportSuccess: "¡Copia de seguridad exportada con éxito!",
+    backupRestoreBtn: "Restaurar desde Copia de Seguridad",
+    backupRestoreConfirmTitle: "¿Restaurar esta Copia?",
+    backupRestoreConfirmText: "Se encontraron recordatorios guardados. ¿Deseas cargarlos en la aplicación?",
+    backupRestoreSuccess: "¡Todos tus recordatorios y voces han sido restaurados con éxito!",
+    backupRestoreInvalid: "Archivo de copia de seguridad no válido o corrupto.",
+    rateAppTitle: "¿Te gusta Ricorda con Voce?",
+    rateAppDesc: "¡Ayúdanos a que más personas descubran la app dejando una reseña de 5 estrellas en Google Play!",
+    rateAppBtn: "Valorar en Google Play ⭐",
+    rateModalTitle: "¿Disfrutas de Ricorda con Voce?",
+    rateModalSubtitle: "Tu apoyo es fundamental para un desarrollador independiente. Si la app te ayuda cada día, ¿nos regalarías 5 estrellas en Google Play?",
+    rateModalYesBtn: "Sí, dejar 5 estrellas ⭐⭐⭐⭐⭐",
+    rateModalLaterBtn: "Recordármelo más tarde",
   },
   fr: {
     appName: "Ricorda con Voce",
@@ -1099,6 +1183,27 @@ export const TRANSLATIONS: Record<LanguageCode, {
     voiceStudioLinkedTo: "associée à",
     voiceStudioSavedAndLinked: "Voix enregistrée et associée à",
     voiceStudioOpenSettings: "Ouvrir les Paramètres",
+    // Nuove funzionalità v1.0.6
+    speechOnRingTitle: "Alarme et Horloge Parlante",
+    speechOnRingDesc: "Lorsque l'alarme sonne, annonce clairement l'heure et le rappel à voix haute.",
+    speechOnRingTestBtn: "Écouter l'Aperçu de l'Alarme Parlante",
+    speechOnRingTestVoice: "Attention, il est 08h30 ! Rappel : Pensez à faire votre promenade matinale.",
+    backupSectionTitle: "Sauvegarde et Restauration",
+    backupSectionDesc: "Exportez tous vos rappels, notes et messages vocaux sur Google Drive ou fichiers pour ne rien perdre si vous changez de téléphone.",
+    backupExportBtn: "Exporter la Sauvegarde (Drive / Partager)",
+    backupExportSuccess: "Sauvegarde exportée avec succès !",
+    backupRestoreBtn: "Restaurer depuis un Fichier",
+    backupRestoreConfirmTitle: "Restaurer cette Sauvegarde ?",
+    backupRestoreConfirmText: "Rappels enregistrés trouvés. Voulez-vous les charger dans l'application ?",
+    backupRestoreSuccess: "Tous vos rappels et messages vocaux ont été restaurés avec succès !",
+    backupRestoreInvalid: "Fichier de sauvegarde invalide ou corrompu.",
+    rateAppTitle: "Vous appréciez Ricorda con Voce ?",
+    rateAppDesc: "Aidez-nous en laissant un avis 5 étoiles sur le Google Play Store !",
+    rateAppBtn: "Noter sur Google Play ⭐",
+    rateModalTitle: "L'application Ricorda con Voce vous plaît ?",
+    rateModalSubtitle: "Votre soutien compte énormément pour un développeur indépendant. Si l'application vous est utile, pourriez-vous nous laisser 5 étoiles ?",
+    rateModalYesBtn: "Oui, donner 5 étoiles ⭐⭐⭐⭐⭐",
+    rateModalLaterBtn: "Me le rappeler plus tard",
   },
   de: {
     appName: "Ricorda con Voce",
@@ -1310,5 +1415,26 @@ export const TRANSLATIONS: Record<LanguageCode, {
     voiceStudioLinkedTo: "verknüpft mit",
     voiceStudioSavedAndLinked: "Stimme gespeichert und verknüpft mit",
     voiceStudioOpenSettings: "App-Einstellungen öffnen",
+    // Nuove funzionalità v1.0.6
+    speechOnRingTitle: "Sprechender Wecker & Alarm",
+    speechOnRingDesc: "Wenn der Alarm ertönt, wird die aktuelle Uhrzeit und der Erinnerungsname laut und deutlich angesagt.",
+    speechOnRingTestBtn: "Sprechenden Alarm testen",
+    speechOnRingTestVoice: "Achtung, es ist 08:30 Uhr! Erinnerung: Denken Sie an Ihren Morgenspaziergang.",
+    backupSectionTitle: "Sicherung & Wiederherstellung",
+    backupSectionDesc: "Exportieren Sie alle Ihre Erinnerungen, Notizen und Stimmen auf Google Drive oder in Dateien, um bei einem Gerätewechsel nichts zu verlieren.",
+    backupExportBtn: "Sicherung exportieren (Drive / Teilen)",
+    backupExportSuccess: "Sicherung erfolgreich exportiert!",
+    backupRestoreBtn: "Aus Sicherungsdatei wiederherstellen",
+    backupRestoreConfirmTitle: "Diese Sicherung wiederherstellen?",
+    backupRestoreConfirmText: "Gespeicherte Erinnerungen gefunden. Möchten Sie diese in die Anwendung laden?",
+    backupRestoreSuccess: "Alle Ihre Erinnerungen und Sprachnotizen wurden erfolgreich wiederhergestellt!",
+    backupRestoreInvalid: "Ungültige oder beschädigte Sicherungsdatei.",
+    rateAppTitle: "Gefällt Ihnen Ricorda con Voce?",
+    rateAppDesc: "Helfen Sie uns mit einer 5-Sterne-Bewertung im Google Play Store!",
+    rateAppBtn: "Im Google Play Store bewerten ⭐",
+    rateModalTitle: "Zufrieden mit Ricorda con Voce?",
+    rateModalSubtitle: "Ihre Unterstützung bedeutet einem unabhängigen Entwickler sehr viel. Wenn Ihnen die App hilft, würden Sie uns mit 5 Sternen bewerten?",
+    rateModalYesBtn: "Ja, 5 Sterne vergeben ⭐⭐⭐⭐⭐",
+    rateModalLaterBtn: "Später erinnern",
   }
 };
