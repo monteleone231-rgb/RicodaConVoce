@@ -6,7 +6,7 @@
     <color name="colorOnPrimary">#FFFFFF</color>
 
     <!-- Colore Sfondo Splash Screen (Azzurro / Turchese dell'icona dell'app) -->
-    <color name="splashBackground">#00B4D8</color>
+    <color name="splashBackground">#02B3CF</color>
     <color name="splashIconColor">#FFFFFF</color>
 
     <!-- Colori di Sfondo e Superficie -->
